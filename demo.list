@@ -561,7 +561,7 @@ Current file: demo.asm
 000810  2               TEXT_L1_MAP_BASE_ADDRESS_SHIFTED = (TEXT_L1_MAP_BASE_ADDRESS>>9)
 000810  2               
 000810  2               TILE_0_INDEX_BLANK          = 0
-000810  2               TILE_0_INDEX_EMPTY          = 127
+000810  2               TILE_0_INDEX_EMPTY          = 95
 000810  2               TILE_4_INDEX_BLANK          = 96
 000810  2               TILE_4_INDEX_EMPTY          = 350
 000810  2               
@@ -655,10 +655,10 @@ Current file: demo.asm
 0008BF  2               init_text_row:
 0008BF  2  A2 00            ldx     #0                      ; start at tile column 0
 0008C1  2               init_text_cell:
-0008C1  2  A9 7F            lda     #TILE_0_INDEX_EMPTY     ; use transparent (empty) tile
-0008C3  2  8D 23 9F         sta     VERA_data0              ; store tile index in L0
-0008C6  2  8D 24 9F         sta     VERA_data1              ; store tile index in L1
-0008C9  2  A9 10            lda     #(1<<4)                 ; get palette offset, flip, tile index
+0008C1  2  A9 5F            lda     #TILE_0_INDEX_EMPTY     ; use transparent (empty) tile
+0008C3  2  8D 23 9F         sta     VERA_data0              ; store tile index (LO) in L0
+0008C6  2  8D 24 9F         sta     VERA_data1              ; store tile index (LO) in L1
+0008C9  2  A9 10            lda     #(1<<4)                 ; get palette offset, flip, tile index (HI)
 0008CB  2  8D 23 9F         sta     VERA_data0              ; set tile params in L0
 0008CE  2  8D 24 9F         sta     VERA_data1              ; set tile params in L1
 0008D1  2  E8               inx                             ; advance column index
