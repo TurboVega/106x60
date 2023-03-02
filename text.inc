@@ -15,32 +15,48 @@
 ; the VERA, so there is only 1 tile map involved.
 ;
 ; Here is an illustration of how adjacent 6-pixel wide
-; character cells are populated: 'SC' references 'screen'
-; pixels, 'L0' is for 'layer 0', and 'L1' is for 'layer 1'.
-; The 'SC' number lines count pixels in the horizontal
-; (X) direction. The 'L0' number line shows bit offsets
-; within tile data bytes, for 'layer 0' (note that these
-; offsets are in reverse order from the bit positions in
-; the data bytes, because pixel #0 is at bit position #7).
-; The 'L1' number line shows bit offsets within tile data
-; bytes, for 'layer 1'.
+; character cells are populated, where:
 ;
-; Desired visible effect:
+; SCC = screen character column index
+; SPX = screen pixel X coordinate
+; SPD = screen pixels desired for viewing
+; C00 = column index in layer 0 (0..105), for pixel offset 0 bits
+; C04 = column index in layer 0 (0..105), for pixel offset 4 bits
+; C10 = column index in layer 1 (0..211), for pixel offset 0 bits
+; C14 = column index in layer 4 (0..211), for pixel offset 4 bits
+; L0X = layer 0 pixel X coordinate
+; L1X = layer 1 pixel X coordinate
+; L0P = layer 0 pixels displayed
+; L1P = layer 1 pixels displayed
+; xxxxxx = one row within 6x8-pixel character cell (aaaaaa, bbbbbb, etc.)
+; '+' = purposeful transparent leading pixels
+; '-' = purposeful transparent trailing pixels
 ;
-; SC 0000000000111111111122222222223333333333
-; SC 0123456789012345678901234567890123456789
-;    aaaaaabbbbbbccccccddddddeeeeeeffffff
+; SCC 0.....1.....2.....3.....4.....5.....
+; SPX 0000000000111111111122222222223333333333
+; SPX 0123456789012345678901234567890123456789
+; SPD aaaaaabbbbbbccccccddddddeeeeeeffffff
 ;
-; L0 0123456701234567012345670123456701234567
-; L0 aaaaaa      cccccc      eeeeee
-; L1       bbbbbb      dddddd      ffffff
-; L1   0123456701234567012345670123456701234567
+; C00 0=======                3=======
+; C04         1=======2=======
+; L0X 0123456701234567012345670123456701234567
+; L0P aaaaaa--++++cccccc------eeeeee--
+; L1P   ++++bbbbbb------dddddd--++++ffffff------
+; L1X   0123456701234567012345670123456701234567
+; C10                   2=======
+; C14   0=======1=======        3=======
 ;
 
 TEXT_MAP_TILES_ACROSS       = 128
 TEXT_MAP_TILES_DOWN         = 64
 TEXT_SCREEN_TILES_ACROSS    = 106
 TEXT_SCREEN_TILES_DOWN      = 60
+
+TILE_0_INDEX_BLANK          = 0
+TILE_0_INDEX_EMPTY          = 95
+TILE_4_INDEX_BLANK          = 96
+TILE_4_INDEX_EMPTY          = 350
+
 TEXT_L0_MAP_BASE_ADDRESS    = $00000
 TEXT_L1_MAP_BASE_ADDRESS    = $04000
 TEXT_TILE_DATA_ADDRESS      = $08000
@@ -48,11 +64,6 @@ TEXT_TILE_DATA_ADDRESS      = $08000
 TEXT_TILE_DATA_ADDRESS_SHIFTED   = (TEXT_TILE_DATA_ADDRESS>>(11-2))
 TEXT_L0_MAP_BASE_ADDRESS_SHIFTED = (TEXT_L0_MAP_BASE_ADDRESS>>9)
 TEXT_L1_MAP_BASE_ADDRESS_SHIFTED = (TEXT_L1_MAP_BASE_ADDRESS>>9)
-
-TILE_0_INDEX_BLANK          = 0
-TILE_0_INDEX_EMPTY          = 95
-TILE_4_INDEX_BLANK          = 96
-TILE_4_INDEX_EMPTY          = 350
 
 ;-------------------------------------------------------------------
 ; Load text character pixel data
@@ -123,7 +134,7 @@ init_text_tile_information:
     sta     VERA_L1_mapbase
     lda     #TEXT_TILE_DATA_ADDRESS_SHIFTED|TILE_HEIGHT_08_PIXELS|TILE_WIDTH_08_PIXELS
     sta     VERA_L1_tilebase
-    lda     #4      ; 4-pixel horizontal (X) offset
+    lda     #2      ; 2-pixel horizontal (X) offset
     stz     VERA_L1_hscroll_l
     stz     VERA_L1_hscroll_h
     stz     VERA_L1_vscroll_l
@@ -154,58 +165,118 @@ init_text_cell:
 ; Write text onto the screen.
 ;-------------------------------------------------------------------
 
-write_text:
-    lda     ZP_CHAR_CNT             ; any more characters to do?
-    beq     text_done               ; go if no
+l0_pixel_map_row_addresses:
+    .repeat TEXT_SCREEN_TILES_DOWN, row
+    .addr   TEXT_L0_MAP_BASE_ADDRESS+(row*TEXT_MAP_TILES_ACROSS*2)
+    .endrepeat
 
-    ; compute tile map addresses for row & column
+l1_pixel_map_row_addresses:
+    .repeat TEXT_SCREEN_TILES_DOWN, row
+    .addr   TEXT_L1_MAP_BASE_ADDRESS+(row*TEXT_MAP_TILES_ACROSS*2)
+    .endrepeat
 
-    stz     ZP_PTR_LO               ; init upper pointer into tile map (LO)
-    stz     ZP_PTR_HI               ; init upper pointer into tile map (HI)
-
-    ; find the row in the tile map
-
-    ldx     ZP_TILE_ROW             ; get row for text
-    beq     dont_inc                ; go if in row #0
-find_row:
-    clc
-    lda     ZP_PTR_LO               ; get upper pointer into tile map (LO)
-    adc     #<(TEXT_MAP_TILES_ACROSS*2) ; add map offset for a single row (LO)
-    sta     ZP_PTR_LO               ; set upper pointer into tile map (LO)
-    lda     ZP_PTR_HI               ; get upper pointer into tile map (HI)
-    adc     #>(TEXT_MAP_TILES_ACROSS*2) ; add map offset for a single row (HI)
-    sta     ZP_PTR_HI               ; set upper pointer into tile map (HI)
-    dex                             ; any more rows to advance?
-    bne     find_row                ; go if yes
-dont_inc:
-
-    ; find the column in the tile map
-
+; Find the column in the tile map
+find_map_address_for_column:
     clc
     lda     ZP_TILE_COL             ; get column for text
     asl                             ; multiply by 2
-    adc     ZP_PTR_LO               ; add upper pointer into tile map (LO)
-    sta     ZP_PTR_LO               ; set upper pointer into tile map (LO)
+    adc     ZP_PTR_LO               ; add pointer into tile map (LO)
+    sta     ZP_PTR_LO               ; set pointer into tile map (LO)
     bcc     dont_inc2               ; go if no overflow
-    inc     ZP_PTR_HI               ; adjust upper pointer into tile map (HI)
+    inc     ZP_PTR_HI               ; adjust pointer into tile map (HI)
 dont_inc2:
-
-    ; setup the data pointers to write one character (upper and lower)
-
-    ldx     ZP_PTR_LO               ; get upper pointer into tile map (LO)
-    ldy     ZP_PTR_HI               ; get upper pointer into tile map (HI)
+    ldx     ZP_PTR_LO               ; get pointer into tile map (LO)
+    ldy     ZP_PTR_HI               ; get pointer into tile map (HI)
     lda     #0                      ; always in bank 0
+    rts
+
+; Compute tile map addresses for row & column in layer #0
+set_map_address_for_l0_cell:
+    lda     ZP_TILE_ROW             ; get row for text
+    asl                             ; multiply by 2
+    tay                             ; index into address table
+    lda     l0_pixel_map_row_addresses,y ; get map address (LO)
+    sta     ZP_PTR_LO               ; init pointer into tile map (LO)
+    lda     l0_pixel_map_row_addresses+1,y ; get map address (HI)
+    sta     ZP_PTR_HI               ; init pointer into tile map (HI)
+    jsr     find_map_address_for_column
     VERA_SET_ADDR0_XYA              ; use Data0 register for upper
+    rts
 
-    lda     #0
-write_char:
-    sta     VERA_data0
+; Compute tile map addresses for row & column in layer #1
+set_map_address_for_l1_cell:
+    lda     ZP_TILE_ROW             ; get row for text
+    asl                             ; multiply by 2
+    tay                             ; index into address table
+    lda     l1_pixel_map_row_addresses,y ; get map address (LO)
+    sta     ZP_PTR_LO               ; init pointer into tile map (LO)
+    lda     l1_pixel_map_row_addresses+1,y ; get map address (HI)
+    stz     ZP_PTR_HI               ; init pointer into tile map (HI)
+    jsr     find_map_address_for_column
+    VERA_SET_ADDR1_XYA              ; use Data1 register for upper
+    rts
+
+; Write a single character tile index multiple times
+write_repeated_char:
+    lda     ZP_CHAR_CNT             ; any more characters to do?
+    beq     text_done               ; go if no
+
+    lda     ZP_CHAR_COL             ; get character column index
+    bbs1    ZP_CHAR_COL,case_2_or_3 ; go if column % 4 equals 2 or 3
+    bbs0    ZP_CHAR_COL,case_1      ; go if column % 4 equals 1
+
+case_0:
+    ; 1st character is on L0, using pixel offset 0
+    ; map column index = ((character column index / 4) * 3)
+    ; 2nd (next) character needs case 1
+    bra     do_case_0
+
+case_1:
+    ; 1st character is on L1, using pixel offset 4
+    ; 1st map column index = ((character column index / 4) * 3)
+    ; 2nd map column index = ((character column index / 4) * 3) + 1
+    ; 2nd (next) character needs case 2
+    bra     do_case_1
+
+case_2_or_3:
+    bbs0    ZP_CHAR_COL,col_3       ; go if column % 4 equals 3
+
+case_2:
+    ; 1st character is on L0, using pixel offset 4
+    ; 1st map column index = ((character column index / 4) * 3) + 1
+    ; 2nd map column index = ((character column index / 4) * 3) + 2
+    ; 2nd (next) character needs case 3
+    bra     do_case_2
+
+case_3:
+    ; 1st character is on L1, using pixel offset 0
+    ; map column index = ((character column index / 4) * 3) + 2
+    ; 2nd (next) character needs case 0
+    bra     do_case_3
+
+    jsr     set_map_address_for_l0_cell
+    jsr     set_map_address_for_l1_cell
+
+    lda     ZP_TILE_INDEX           ; get character tile data index
+do_case_0:
+    sta     VERA_data0              ; set character tile data index
     ldy     VERA_data0              ; cause address increment
-    inc
-
-    ; advance to the next character to write
-
     dec     ZP_CHAR_CNT             ; we finished one character
-    bne     write_char              ; back if more to write
+    beq     text_done               ; quit if no more to write
+do_case_1:
+    sta     VERA_data1              ; set character tile data index
+    ldy     VERA_data1              ; cause address increment
+    dec     ZP_CHAR_CNT             ; we finished one character
+    beq     text_done               ; quit if no more to write
+do_case_2:
+    sta     VERA_data0              ; set character tile data index
+    ldy     VERA_data0              ; cause address increment
+    dec     ZP_CHAR_CNT             ; we finished one character
+    beq     text_done               ; quit if no more to write
+do_case_3:
+    sta     VERA_data1              ; set character tile data index
+    ldy     VERA_data1              ; cause address increment
+    dec     ZP_CHAR_CNT             ; we finished one character
+    bne     do_case_0               ; back if more to write
 text_done:
     rts
