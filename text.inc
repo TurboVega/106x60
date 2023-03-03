@@ -251,8 +251,11 @@ compute_1st_tile_map_address:
     lda     ZP_CHAR_COL             ; get character column address
 compute_address:
     jsr     convert_screen_col_to_map_col
-    bbs1    ZP_CHAR_COL,case_2_or_3 ; go if column % 4 equals 2 or 3
-    bbs0    ZP_CHAR_COL,case_1      ; go if column % 4 equals 1
+    lda     ZP_CHAR_COL             ; get character column address
+    and     #$02                    ; check bit #1
+    bne     case_2_or_3             ; go if column % 4 equals 2 or 3
+    and     #$01                    ; check bit #0
+    bne     case_1                  ; go if column % 4 equals 1
 
 case_0:
     ; 1st character is on L0, using pixel offset 0
@@ -266,7 +269,8 @@ case_1:
     jmp     convert_map_col_to_address_l1
 
 case_2_or_3:
-    bbs0    ZP_CHAR_COL,case_3       ; go if column % 4 equals 3
+    and     #$01                    ; check bit #0
+    bne     case_3                  ; go if column % 4 equals 3
 
 case_2:
     ; 1st character is on L0, using pixel offset 4

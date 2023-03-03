@@ -37,7 +37,7 @@ start:
     sta     ZP_CHAR_CODE
     lda     #(1<<4)
     sta     ZP_CHAR_ATTR
-    lda     #106
+    lda     #1
     sta     ZP_CHAR_CNT
     lda     #5
     sta     ZP_CHAR_ROW
