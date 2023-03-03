@@ -122,6 +122,7 @@ init_text_tile_information:
     sta     VERA_L0_mapbase
     lda     #TEXT_TILE_DATA_ADDRESS_SHIFTED|TILE_HEIGHT_08_PIXELS|TILE_WIDTH_08_PIXELS
     sta     VERA_L0_tilebase
+    lda     #1      ; 1-pixel horizontal (X) offset
     stz     VERA_L0_hscroll_l
     stz     VERA_L0_hscroll_h
     stz     VERA_L0_vscroll_l
@@ -134,7 +135,7 @@ init_text_tile_information:
     sta     VERA_L1_mapbase
     lda     #TEXT_TILE_DATA_ADDRESS_SHIFTED|TILE_HEIGHT_08_PIXELS|TILE_WIDTH_08_PIXELS
     sta     VERA_L1_tilebase
-    lda     #2      ; 2-pixel horizontal (X) offset
+    lda     #3      ; 3-pixel horizontal (X) offset
     stz     VERA_L1_hscroll_l
     stz     VERA_L1_hscroll_h
     stz     VERA_L1_vscroll_l
@@ -178,21 +179,24 @@ l1_pixel_map_row_addresses:
 ; Find the column in the tile map
 find_map_address_for_column:
     clc
-    lda     ZP_TILE_COL             ; get column for text
-    asl                             ; multiply by 2
+    lda     ZP_TEMP_INDEX_LO        ; get index for column (LO)
+    asl                             ; multiply by 2 (size of map item)
+    bcc     dont_inc3               ; go if no overflow
+    inc     ZP_TEMP_INDEX_HI        ; adjust index for column (HI)
+dont_inc3:
+    clc
     adc     ZP_PTR_LO               ; add pointer into tile map (LO)
     sta     ZP_PTR_LO               ; set pointer into tile map (LO)
-    bcc     dont_inc2               ; go if no overflow
-    inc     ZP_PTR_HI               ; adjust pointer into tile map (HI)
-dont_inc2:
+    lda     ZP_TEMP_INDEX_HI        ; get index for column (HI)
+    adc     ZP_PTR_HI               ; adjust pointer into tile map (HI)
+    tay                             ; move pointer (HI) to Y
     ldx     ZP_PTR_LO               ; get pointer into tile map (LO)
-    ldy     ZP_PTR_HI               ; get pointer into tile map (HI)
     lda     #0                      ; always in bank 0
     rts
 
 ; Compute tile map addresses for row & column in layer #0
-set_map_address_for_l0_cell:
-    lda     ZP_TILE_ROW             ; get row for text
+convert_map_col_to_address_l0:
+    lda     ZP_CHAR_ROW             ; get row for text
     asl                             ; multiply by 2
     tay                             ; index into address table
     lda     l0_pixel_map_row_addresses,y ; get map address (LO)
@@ -203,80 +207,148 @@ set_map_address_for_l0_cell:
     VERA_SET_ADDR0_XYA              ; use Data0 register for upper
     rts
 
+
 ; Compute tile map addresses for row & column in layer #1
-set_map_address_for_l1_cell:
-    lda     ZP_TILE_ROW             ; get row for text
+convert_map_col_to_address_l1:
+    lda     ZP_CHAR_ROW             ; get row for text
     asl                             ; multiply by 2
     tay                             ; index into address table
     lda     l1_pixel_map_row_addresses,y ; get map address (LO)
     sta     ZP_PTR_LO               ; init pointer into tile map (LO)
     lda     l1_pixel_map_row_addresses+1,y ; get map address (HI)
-    stz     ZP_PTR_HI               ; init pointer into tile map (HI)
+    sta     ZP_PTR_HI               ; init pointer into tile map (HI)
     jsr     find_map_address_for_column
     VERA_SET_ADDR1_XYA              ; use Data1 register for upper
     rts
 
-; Write a single character tile index multiple times
-write_repeated_char:
-    lda     ZP_CHAR_CNT             ; any more characters to do?
-    beq     text_done               ; go if no
+; Compute a tile map index using the character column index.
+; Expects: A contains screen character column (0..105)
+; Outputs: ZP_TEMP_INDEX_LO, ZP_TEMP_INDEX_HI
+;
+convert_screen_col_to_map_col:
+    lsr                             ; divide by 2
+    lsr                             ; divide by 2 again
+    sta     ZP_TEMP_INDEX_LO        ; save (column index / 4)
+    asl                             ; compute ((column index / 4) * 2)
+    clc
+    adc     ZP_TEMP_INDEX_LO        ; now ((column index / 4) * 3)
+    sta     ZP_TEMP_INDEX_LO
+    stz     ZP_TEMP_INDEX_HI        ; always zero at this point
+    rts
 
+; Compute the tile map address, which could be in either layer,
+; and could use either 0 or 4 pixel offset. The corresponding
+; tile map index is about 3/4ths (75%) as large as the original
+; character column index, plus some possible small adjustment.
+; Expects: ZP_CHAR_COL, ZP_CHAR_ROW
+; Outputs: VERA_data0 or VERA_data1 address prepared
+;
+compute_2nd_tile_map_address:
     lda     ZP_CHAR_COL             ; get character column index
+    inc                             ; advance to next column
+    bra    compute_address            ; go finish computing address
+compute_1st_tile_map_address:
+    lda     ZP_CHAR_COL             ; get character column address
+compute_address:
+    jsr     convert_screen_col_to_map_col
     bbs1    ZP_CHAR_COL,case_2_or_3 ; go if column % 4 equals 2 or 3
     bbs0    ZP_CHAR_COL,case_1      ; go if column % 4 equals 1
 
 case_0:
     ; 1st character is on L0, using pixel offset 0
-    ; map column index = ((character column index / 4) * 3)
-    ; 2nd (next) character needs case 1
-    bra     do_case_0
+    ; Map column index adjustment is 0
+    jmp     convert_map_col_to_address_l0
 
 case_1:
     ; 1st character is on L1, using pixel offset 4
-    ; 1st map column index = ((character column index / 4) * 3)
-    ; 2nd map column index = ((character column index / 4) * 3) + 1
-    ; 2nd (next) character needs case 2
-    bra     do_case_1
+    ; Part A map column index adjustment is 0
+    ; Part B map column index adjustment is 1
+    jmp     convert_map_col_to_address_l1
 
 case_2_or_3:
-    bbs0    ZP_CHAR_COL,col_3       ; go if column % 4 equals 3
+    bbs0    ZP_CHAR_COL,case_3       ; go if column % 4 equals 3
 
 case_2:
     ; 1st character is on L0, using pixel offset 4
-    ; 1st map column index = ((character column index / 4) * 3) + 1
-    ; 2nd map column index = ((character column index / 4) * 3) + 2
-    ; 2nd (next) character needs case 3
-    bra     do_case_2
+    ; Part A map column index adjustment is 1
+    ; Part B map column index adjustment is 2
+    inc     ZP_TEMP_INDEX_LO
+    jmp     convert_map_col_to_address_l0
 
 case_3:
-    ; 1st character is on L1, using pixel offset 0
-    ; map column index = ((character column index / 4) * 3) + 2
-    ; 2nd (next) character needs case 0
-    bra     do_case_3
+    ; 1st character is on L1, using pixel offset 1
+    ; Map column index adjustment is 2
+    lda     ZP_TEMP_INDEX_LO        ; get computed tile map index (LO)
+    clc
+    adc     #2
+    sta     ZP_TEMP_INDEX_LO        ; save computed tile map index (LO)
+    jmp     convert_map_col_to_address_l1
 
-    jsr     set_map_address_for_l0_cell
-    jsr     set_map_address_for_l1_cell
+; Write a single character tile index multiple times
+; Expects: ZP_CHAR_CNT, ZP_CHAR_ROW, ZP_CHAR_COL, ZP_CHAR_ATTR
+;
+write_repeated_char:
+    lda     ZP_CHAR_CNT             ; any more characters to do?
+    beq     text_done               ; go if no
+    jsr     compute_1st_tile_map_address
+    jsr     compute_2nd_tile_map_address
+    ;jsr     compute_offset_0_tile_data_info
+    ;jsr     compute_offset_4_tile_data_info
+    lda ZP_CHAR_CODE
+    sta ZP_TILE_INDEX_0
+    lda ZP_CHAR_ATTR
+    sta ZP_TILE_ATTR_0
+    lda ZP_CHAR_CODE
+    asl
+    clc
+    adc #TILE_4_INDEX_BLANK
+    sta ZP_TILE_INDEX_4A
+    inc
+    sta ZP_TILE_INDEX_4B
+    lda #0 ;ZP_CHAR_ATTR
+    sta ZP_TILE_ATTR_4A
+    sta ZP_TILE_ATTR_4B
 
-    lda     ZP_TILE_INDEX           ; get character tile data index
+    bbs1    ZP_CHAR_COL,do_case_2_or_3 ; go if column % 4 equals 2 or 3
+    bbs0    ZP_CHAR_COL,do_case_1      ; go if column % 4 equals 1
 do_case_0:
+    lda     ZP_TILE_INDEX_0         ; get character tile data index
     sta     VERA_data0              ; set character tile data index
-    ldy     VERA_data0              ; cause address increment
+    lda     ZP_TILE_ATTR_0          ; get character tile attributes
+    sta     VERA_data0              ; set character tile attributes
     dec     ZP_CHAR_CNT             ; we finished one character
     beq     text_done               ; quit if no more to write
 do_case_1:
-    sta     VERA_data1              ; set character tile data index
-    ldy     VERA_data1              ; cause address increment
+    lda     ZP_TILE_INDEX_4A        ; get character tile data index A
+    sta     VERA_data1              ; set character tile data index A
+    lda     ZP_TILE_ATTR_4A         ; get character tile attributes A
+    sta     VERA_data1              ; set character tile attributes A
+    lda     ZP_TILE_INDEX_4B        ; get character tile data index B
+    sta     VERA_data1              ; set character tile data index B
+    lda     ZP_TILE_ATTR_4B         ; get character tile attributes B
+    sta     VERA_data1              ; set character tile attributes B
     dec     ZP_CHAR_CNT             ; we finished one character
     beq     text_done               ; quit if no more to write
 do_case_2:
-    sta     VERA_data0              ; set character tile data index
-    ldy     VERA_data0              ; cause address increment
+    lda     ZP_TILE_INDEX_4A        ; get character tile data index A
+    sta     VERA_data0              ; set character tile data index A
+    lda     ZP_TILE_ATTR_4A         ; get character tile attributes A
+    sta     VERA_data0              ; set character tile attributes A
+    lda     ZP_TILE_INDEX_4B        ; get character tile data index B
+    sta     VERA_data0              ; set character tile data index B
+    lda     ZP_TILE_ATTR_4B         ; get character tile attributes B
+    sta     VERA_data0              ; set character tile attributes B
     dec     ZP_CHAR_CNT             ; we finished one character
     beq     text_done               ; quit if no more to write
 do_case_3:
+    lda     ZP_TILE_INDEX_0         ; get character tile data index
     sta     VERA_data1              ; set character tile data index
-    ldy     VERA_data1              ; cause address increment
+    lda     ZP_TILE_ATTR_0          ; get character tile attributes
+    sta     VERA_data1              ; set character tile attributes
     dec     ZP_CHAR_CNT             ; we finished one character
     bne     do_case_0               ; back if more to write
 text_done:
     rts
+do_case_2_or_3:
+    bbs0    ZP_CHAR_COL,do_case_3   ; go if column % 4 equals 3
+    bra     do_case_2               ; go if column % 4 equals 2

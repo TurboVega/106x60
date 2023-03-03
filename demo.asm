@@ -33,13 +33,15 @@ start:
     jsr     init_global_video_regs
     jsr     init_text_tile_information
 
-    lda     #79
-    sta     ZP_TILE_INDEX
-    lda     #10
+    lda     #67-$20
+    sta     ZP_CHAR_CODE
+    lda     #(1<<4)
+    sta     ZP_CHAR_ATTR
+    lda     #100
     sta     ZP_CHAR_CNT
     lda     #5
     sta     ZP_CHAR_ROW
-    lda     #11
+    lda     #0
     sta     ZP_CHAR_COL
     jsr     write_repeated_char
 
