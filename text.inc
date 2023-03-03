@@ -305,7 +305,7 @@ write_repeated_char:
     sta ZP_TILE_INDEX_4A
     inc
     sta ZP_TILE_INDEX_4B
-    lda #0 ;ZP_CHAR_ATTR
+    lda ZP_CHAR_ATTR
     sta ZP_TILE_ATTR_4A
     sta ZP_TILE_ATTR_4B
 
@@ -322,10 +322,12 @@ do_case_1:
     lda     ZP_TILE_INDEX_4A        ; get character tile data index A
     sta     VERA_data1              ; set character tile data index A
     lda     ZP_TILE_ATTR_4A         ; get character tile attributes A
+ and #$01
     sta     VERA_data1              ; set character tile attributes A
     lda     ZP_TILE_INDEX_4B        ; get character tile data index B
     sta     VERA_data1              ; set character tile data index B
     lda     ZP_TILE_ATTR_4B         ; get character tile attributes B
+ and #$01
     sta     VERA_data1              ; set character tile attributes B
     dec     ZP_CHAR_CNT             ; we finished one character
     beq     text_done               ; quit if no more to write
@@ -343,6 +345,7 @@ do_case_2:
 do_case_3:
     lda     ZP_TILE_INDEX_0         ; get character tile data index
     sta     VERA_data1              ; set character tile data index
+ and #$01
     lda     ZP_TILE_ATTR_0          ; get character tile attributes
     sta     VERA_data1              ; set character tile attributes
     dec     ZP_CHAR_CNT             ; we finished one character

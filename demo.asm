@@ -33,20 +33,20 @@ start:
     jsr     init_global_video_regs
     jsr     init_text_tile_information
 
-    lda     #67-$20
+    lda     #69-$20
     sta     ZP_CHAR_CODE
     lda     #(1<<4)
     sta     ZP_CHAR_ATTR
-    lda     #100
+    lda     #106
     sta     ZP_CHAR_CNT
     lda     #5
     sta     ZP_CHAR_ROW
-    lda     #0
+    lda     #1
     sta     ZP_CHAR_COL
     jsr     write_repeated_char
 
     stz     VERA_ctrl     ; no reset/DCSEL/ADDRSEL
-    lda     #ENABLE_LAYER_1|ENABLE_LAYER_0|OUTPUT_MODE_VGA
+    lda     #ENABLE_LAYER_0|ENABLE_LAYER_1|OUTPUT_MODE_VGA
     sta     VERA_dc_video
 
 @main_loop:
