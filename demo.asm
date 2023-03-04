@@ -33,6 +33,18 @@ start:
     jsr     init_global_video_regs
     jsr     init_text_tile_information
 
+    lda     #110-$20
+    sta     ZP_CHAR_CODE
+    lda     #(0<<4)
+    sta     ZP_CHAR_ATTR
+    lda     #106
+    sta     ZP_CHAR_CNT
+    lda     #0
+    sta     ZP_CHAR_ROW
+    lda     #0
+    sta     ZP_CHAR_COL
+    jsr     write_repeated_char
+
     lda     #69-$20
     sta     ZP_CHAR_CODE
     lda     #(1<<4)
@@ -66,6 +78,18 @@ start:
     lda     #7
     sta     ZP_CHAR_ROW
     lda     #100
+    sta     ZP_CHAR_COL
+    jsr     write_repeated_char
+
+    lda     #111-$20
+    sta     ZP_CHAR_CODE
+    lda     #(0<<4)
+    sta     ZP_CHAR_ATTR
+    lda     #106
+    sta     ZP_CHAR_CNT
+    lda     #59
+    sta     ZP_CHAR_ROW
+    lda     #0
     sta     ZP_CHAR_COL
     jsr     write_repeated_char
 
