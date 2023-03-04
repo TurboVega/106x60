@@ -122,8 +122,8 @@ init_text_tile_information:
     sta     VERA_L0_mapbase
     lda     #TEXT_TILE_DATA_ADDRESS_SHIFTED|TILE_HEIGHT_08_PIXELS|TILE_WIDTH_08_PIXELS
     sta     VERA_L0_tilebase
-    lda     #1      ; 1-pixel horizontal (X) offset
-    stz     VERA_L0_hscroll_l
+    lda     #6
+    sta     VERA_L0_hscroll_l
     stz     VERA_L0_hscroll_h
     stz     VERA_L0_vscroll_l
     stz     VERA_L0_vscroll_h
@@ -135,8 +135,8 @@ init_text_tile_information:
     sta     VERA_L1_mapbase
     lda     #TEXT_TILE_DATA_ADDRESS_SHIFTED|TILE_HEIGHT_08_PIXELS|TILE_WIDTH_08_PIXELS
     sta     VERA_L1_tilebase
-    lda     #3      ; 3-pixel horizontal (X) offset
-    stz     VERA_L1_hscroll_l
+    lda     #4
+    sta     VERA_L1_hscroll_l
     stz     VERA_L1_hscroll_h
     stz     VERA_L1_vscroll_l
     stz     VERA_L1_vscroll_h
@@ -168,12 +168,12 @@ init_text_cell:
 
 l0_pixel_map_row_addresses:
     .repeat TEXT_SCREEN_TILES_DOWN, row
-    .addr   TEXT_L0_MAP_BASE_ADDRESS+(row*TEXT_MAP_TILES_ACROSS*2)
+    .addr   TEXT_L0_MAP_BASE_ADDRESS+(row*TEXT_MAP_TILES_ACROSS*2)+2
     .endrepeat
 
 l1_pixel_map_row_addresses:
     .repeat TEXT_SCREEN_TILES_DOWN, row
-    .addr   TEXT_L1_MAP_BASE_ADDRESS+(row*TEXT_MAP_TILES_ACROSS*2)
+    .addr   TEXT_L1_MAP_BASE_ADDRESS+(row*TEXT_MAP_TILES_ACROSS*2)+2
     .endrepeat
 
 ; Find the column in the tile map
@@ -204,6 +204,8 @@ convert_map_col_to_address_l0:
     lda     l0_pixel_map_row_addresses+1,y ; get map address (HI)
     sta     ZP_PTR_HI               ; init pointer into tile map (HI)
     jsr     find_map_address_for_column
+    stx     ZP_TILE_ADDR_0_LO
+    sty     ZP_TILE_ADDR_0_HI
     VERA_SET_ADDR0_XYA              ; use Data0 register for upper
     rts
 
@@ -218,6 +220,8 @@ convert_map_col_to_address_l1:
     lda     l1_pixel_map_row_addresses+1,y ; get map address (HI)
     sta     ZP_PTR_HI               ; init pointer into tile map (HI)
     jsr     find_map_address_for_column
+    stx     ZP_TILE_ADDR_1_LO
+    sty     ZP_TILE_ADDR_1_HI
     VERA_SET_ADDR1_XYA              ; use Data1 register for upper
     rts
 
@@ -248,15 +252,12 @@ compute_2nd_tile_map_address:
     inc                             ; advance to next column
     bra    compute_address          ; go finish computing address
 compute_1st_tile_map_address:
-    lda     ZP_CHAR_COL             ; get character column address
+    lda     ZP_CHAR_COL             ; get character column index
 compute_address:
+    sta     ZP_CURRENT_COL          ; save current column index
     jsr     convert_screen_col_to_map_col
-    lda     ZP_CHAR_COL             ; get character column address
-    and     #$02                    ; check bit #1
-    bne     case_2_or_3             ; go if column % 4 equals 2 or 3
-    lda     ZP_CHAR_COL             ; get character column address
-    and     #$01                    ; check bit #0
-    bne     case_1                  ; go if column % 4 equals 1
+    bbs1    ZP_CURRENT_COL,case_2_or_3 ; go if column % 4 equals 2 or 3
+    bbs0    ZP_CURRENT_COL,case_1   ; go if column % 4 equals 1
 
 case_0:
     ; 1st character is on L0, using pixel offset 0
@@ -270,9 +271,7 @@ case_1:
     jmp     convert_map_col_to_address_l1
 
 case_2_or_3:
-    lda     ZP_CHAR_COL             ; get character column address
-    and     #$01                    ; check bit #0
-    bne     case_3                  ; go if column % 4 equals 3
+    bbs0    ZP_CURRENT_COL,case_3   ; go if column % 4 equals 3
 
 case_2:
     ; 1st character is on L0, using pixel offset 4

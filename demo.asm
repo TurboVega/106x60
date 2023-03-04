@@ -37,11 +37,35 @@ start:
     sta     ZP_CHAR_CODE
     lda     #(1<<4)
     sta     ZP_CHAR_ATTR
-    lda     #2
+    lda     #50
     sta     ZP_CHAR_CNT
     lda     #5
     sta     ZP_CHAR_ROW
-    lda     #1
+    lda     #0
+    sta     ZP_CHAR_COL
+    jsr     write_repeated_char
+
+    lda     #71-$20
+    sta     ZP_CHAR_CODE
+    lda     #(1<<4)
+    sta     ZP_CHAR_ATTR
+    lda     #50
+    sta     ZP_CHAR_CNT
+    lda     #6
+    sta     ZP_CHAR_ROW
+    lda     #50
+    sta     ZP_CHAR_COL
+    jsr     write_repeated_char
+
+    lda     #73-$20
+    sta     ZP_CHAR_CODE
+    lda     #(1<<4)
+    sta     ZP_CHAR_ATTR
+    lda     #6
+    sta     ZP_CHAR_CNT
+    lda     #7
+    sta     ZP_CHAR_ROW
+    lda     #100
     sta     ZP_CHAR_COL
     jsr     write_repeated_char
 
