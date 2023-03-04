@@ -393,8 +393,10 @@ FETVec         = $03AF
 ; the address is in X (LO), Y (HI), and A (BANK)
 .macro VERA_SET_ADDR1_XYA stride
     .scope
-        stz VERA_ctrl
-        inc VERA_ctrl
+        pha
+        lda #ADDRSEL
+        sta VERA_ctrl
+        pla
 
         .ifnblank stride
             ora #(stride << 4)

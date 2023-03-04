@@ -246,7 +246,7 @@ convert_screen_col_to_map_col:
 compute_2nd_tile_map_address:
     lda     ZP_CHAR_COL             ; get character column index
     inc                             ; advance to next column
-    bra    compute_address            ; go finish computing address
+    bra    compute_address          ; go finish computing address
 compute_1st_tile_map_address:
     lda     ZP_CHAR_COL             ; get character column address
 compute_address:
@@ -254,6 +254,7 @@ compute_address:
     lda     ZP_CHAR_COL             ; get character column address
     and     #$02                    ; check bit #1
     bne     case_2_or_3             ; go if column % 4 equals 2 or 3
+    lda     ZP_CHAR_COL             ; get character column address
     and     #$01                    ; check bit #0
     bne     case_1                  ; go if column % 4 equals 1
 
@@ -269,6 +270,7 @@ case_1:
     jmp     convert_map_col_to_address_l1
 
 case_2_or_3:
+    lda     ZP_CHAR_COL             ; get character column address
     and     #$01                    ; check bit #0
     bne     case_3                  ; go if column % 4 equals 3
 
@@ -326,12 +328,10 @@ do_case_1:
     lda     ZP_TILE_INDEX_4A        ; get character tile data index A
     sta     VERA_data1              ; set character tile data index A
     lda     ZP_TILE_ATTR_4A         ; get character tile attributes A
- and #$01
     sta     VERA_data1              ; set character tile attributes A
     lda     ZP_TILE_INDEX_4B        ; get character tile data index B
     sta     VERA_data1              ; set character tile data index B
     lda     ZP_TILE_ATTR_4B         ; get character tile attributes B
- and #$01
     sta     VERA_data1              ; set character tile attributes B
     dec     ZP_CHAR_CNT             ; we finished one character
     beq     text_done               ; quit if no more to write
@@ -349,7 +349,6 @@ do_case_2:
 do_case_3:
     lda     ZP_TILE_INDEX_0         ; get character tile data index
     sta     VERA_data1              ; set character tile data index
- and #$01
     lda     ZP_TILE_ATTR_0          ; get character tile attributes
     sta     VERA_data1              ; set character tile attributes
     dec     ZP_CHAR_CNT             ; we finished one character
