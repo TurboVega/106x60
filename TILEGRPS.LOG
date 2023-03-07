@@ -1,7 +1,7 @@
 Image to Binary (PNG-to-VERA file convertor) V1.6
-Reading: alphtile.png
-alphtile.png, 8x2304, Rgba8
-File alphtile.png has 2 unique colors (maximum is 3).
+Reading: tilegrps.png
+tilegrps.png, 8x8184, Rgba8
+File tilegrps.png has 3 unique colors (maximum is 3).
 ; Palette entries by index:
 ;             VERA      Dec Hex:  R G B
 ;
@@ -25,7 +25,7 @@ begin_palette_table:
     .byte    $00,$00  ; 016 $10:  0 0 0 (FREE)
     .byte    $00,$00  ; 017 $11:  0 0 0
     .byte    $ff,$0f  ; 018 $12:  f f f
-    .byte    $00,$00  ; 019 $13:  0 0 0 (FREE)
+    .byte    $0f,$00  ; 019 $13:  0 0 f
     .byte    $00,$00  ; 020 $14:  0 0 0 (FREE)
     .byte    $00,$00  ; 021 $15:  0 0 0 (FREE)
     .byte    $00,$00  ; 022 $16:  0 0 0 (FREE)
@@ -264,7 +264,7 @@ begin_palette_table:
     .byte    $00,$00  ; 255 $ff:  0 0 0 (FREE)
 end_palette_table:
 
-Wrote file (ALPHTILE.BIN) as 4610 bytes.
+Wrote file (TILEGRPS.BIN) as 16370 bytes.
 Wrote file (PALETTE.BIN) as 514 bytes.
 
 VRAM Address Arrangement
@@ -273,4 +273,4 @@ Waste Start  End    Size  Align Width Height Path/Name
 ----- ------ ------ ----- ----- ----- ------ ----------------------------------
     0 $00000 $03fff 16384   512   128    64  layer-0-tile-map
     0 $04000 $07fff 16384   512   128    64  layer-1-tile-map
-    0 $08000 $091ff  4608  2048     8  2304  alphtile.png
+    0 $08000 $0bfef 16368  2048     8  8184  tilegrps.png
