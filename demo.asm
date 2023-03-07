@@ -33,18 +33,18 @@ start:
     jsr     init_global_video_regs
     jsr     init_text_tile_information
 
-    lda     #0
+    lda     #2
     sta     ZP_PARAM_GROUP
     lda     #1
     sta     ZP_PARAM_PALETTE
 
     lda     #$41-$20
     sta     ZP_PARAM_CODE
-    lda     #1
+    lda     #4
     sta     ZP_PARAM_CNT
     lda     #30
     sta     ZP_PARAM_ROW
-    lda     #1
+    lda     #0
     sta     ZP_PARAM_COL
     jsr     write_repeated_char
 

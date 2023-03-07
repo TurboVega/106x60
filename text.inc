@@ -430,8 +430,8 @@ use_tile_grp:
     sta     ZP_TILE_ATTR_4A             ; set tile attributes & tile index (part A, HI)
 
     lda     ZP_PARAM_CODE               ; get character code parameter
-    inc                                 ; advance to part B of offset 4 character
     asl                                 ; multiply by 2
+    inc                                 ; advance to part B of offset 4 character
     clc
     adc     tile_group_limits+TileGroupLimits::offset_4_index_start,x
     sta     ZP_TILE_INDEX_4B            ; set offset 4 tile index (part B, LO)
