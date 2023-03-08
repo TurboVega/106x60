@@ -1,4 +1,8 @@
-; Zero Page custom variables
+
+; File: zeropage.inc
+; Purpose: Zero Page custom variables
+; Copyright (c) 2023 by Curtis Whitley
+;
 
 ZP_PTR              = $30   ; temporary pointer #1
 ZP_PTR_LO           = $30

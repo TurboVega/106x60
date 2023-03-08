@@ -1,5 +1,6 @@
 ; File: text.inc
 ; Purpose: Display text on the screen
+; Copyright (c) 2023 by Curtis Whitley
 ;
 ; This code shows 5x7 pixel characters in 6x8 pixel cells.
 ; Because each character position is 6 pixels wide, which

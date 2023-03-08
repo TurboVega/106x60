@@ -1,7 +1,6 @@
-; Program: DEMO
 ; File: demo.asm
 ; Purpose: Show a 106 character by 60 line display
-; By: Curtis Whitley
+; Copyright (c) 2023 by Curtis Whitley
 ;
 
 .org $080D
