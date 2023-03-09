@@ -265,4 +265,80 @@ draw_border:
     sta     ZP_PARAM_CODE               ; set character code
     jsr     write_repeated_char
 
+    ; draw the upper horizontal bar
+    lda     ZP_BORDER_ROW
+    sta     ZP_PARAM_ROW
+    lda     ZP_BORDER_COL
+    inc
+    sta     ZP_PARAM_COL
+    lda     ZP_BORDER_WIDTH
+    dec
+    dec
+    sta     ZP_PARAM_CNT
+    ldy     #BorderStyleDefinition::horizontal_code
+    lda     (ZP_STYLE_PTR),y
+    sta     ZP_PARAM_CODE               ; set character code
+    jsr     write_repeated_char
+
+    ; draw the lower horizontal bar
+    lda     ZP_BORDER_ROW
+    clc
+    adc     ZP_BORDER_HEIGHT
+    dec
+    sta     ZP_PARAM_ROW
+    lda     ZP_BORDER_COL
+    inc
+    sta     ZP_PARAM_COL
+    lda     ZP_BORDER_WIDTH
+    dec
+    dec
+    sta     ZP_PARAM_CNT
+    ldy     #BorderStyleDefinition::horizontal_code
+    lda     (ZP_STYLE_PTR),y
+    sta     ZP_PARAM_CODE               ; set character code
+    jsr     write_repeated_char
+
+    ; draw the left vertical bar
+    lda     ZP_BORDER_ROW
+    sta     ZP_PARAM_ROW
+    lda     ZP_BORDER_COL
+    sta     ZP_PARAM_COL
+    lda     ZP_BORDER_HEIGHT
+    dec
+    dec
+    sta     ZP_BORDER_CNT
+    ldy     #BorderStyleDefinition::vertical_code
+    lda     (ZP_STYLE_PTR),y
+    sta     ZP_PARAM_CODE               ; set character code
+vert_loop:
+    inc     ZP_PARAM_ROW
+    lda     #1
+    sta     ZP_PARAM_CNT
+    jsr     write_repeated_char
+    dec     ZP_BORDER_CNT
+    bne     vert_loop
+
+    ; draw the right vertical bar
+    lda     ZP_BORDER_ROW
+    sta     ZP_PARAM_ROW
+    lda     ZP_BORDER_COL
+    clc
+    adc     ZP_BORDER_WIDTH
+    dec
+    sta     ZP_PARAM_COL
+    lda     ZP_BORDER_HEIGHT
+    dec
+    dec
+    sta     ZP_BORDER_CNT
+    ldy     #BorderStyleDefinition::vertical_code
+    lda     (ZP_STYLE_PTR),y
+    sta     ZP_PARAM_CODE               ; set character code
+vert_loop2:
+    inc     ZP_PARAM_ROW
+    lda     #1
+    sta     ZP_PARAM_CNT
+    jsr     write_repeated_char
+    dec     ZP_BORDER_CNT
+    bne     vert_loop2
+
     rts

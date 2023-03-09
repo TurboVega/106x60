@@ -32,7 +32,7 @@ start:
     jsr     load_palette
     jsr     init_global_video_regs
     jsr     init_text_tile_information
-
+.if 0
     lda     #2
     sta     ZP_PARAM_GROUP
     lda     #1
@@ -97,6 +97,7 @@ start:
     lda     #0
     sta     ZP_PARAM_COL
     jsr     write_repeated_char
+.endif
 
     lda     #35
     sta     ZP_BORDER_ROW
@@ -106,11 +107,107 @@ start:
     sta     ZP_BORDER_GROUP
     lda     #1
     sta     ZP_BORDER_PALETTE
-    lda     #0
+    lda     #$11
     sta     ZP_BORDER_STYLE
     lda     #10
     sta     ZP_BORDER_WIDTH
     lda     #15
+    sta     ZP_BORDER_HEIGHT
+    jsr     draw_border
+
+    lda     #12
+    sta     ZP_BORDER_ROW
+    lda     #12
+    sta     ZP_BORDER_COL
+    lda     #0
+    sta     ZP_BORDER_GROUP
+    lda     #1
+    sta     ZP_BORDER_PALETTE
+    lda     #21
+    sta     ZP_BORDER_STYLE
+    lda     #6
+    sta     ZP_BORDER_WIDTH
+    lda     #7
+    sta     ZP_BORDER_HEIGHT
+    jsr     draw_border
+
+    lda     #25
+    sta     ZP_BORDER_ROW
+    lda     #40
+    sta     ZP_BORDER_COL
+    lda     #0
+    sta     ZP_BORDER_GROUP
+    lda     #1
+    sta     ZP_BORDER_PALETTE
+    lda     #$12
+    sta     ZP_BORDER_STYLE
+    lda     #6
+    sta     ZP_BORDER_WIDTH
+    lda     #7
+    sta     ZP_BORDER_HEIGHT
+    jsr     draw_border
+
+    lda     #28
+    sta     ZP_BORDER_ROW
+    lda     #57
+    sta     ZP_BORDER_COL
+    lda     #0
+    sta     ZP_BORDER_GROUP
+    lda     #1
+    sta     ZP_BORDER_PALETTE
+    lda     #$13
+    sta     ZP_BORDER_STYLE
+    lda     #6
+    sta     ZP_BORDER_WIDTH
+    lda     #7
+    sta     ZP_BORDER_HEIGHT
+    jsr     draw_border
+
+    lda     #25
+    sta     ZP_BORDER_ROW
+    lda     #50
+    sta     ZP_BORDER_COL
+    lda     #0
+    sta     ZP_BORDER_GROUP
+    lda     #1
+    sta     ZP_BORDER_PALETTE
+    lda     #$22
+    sta     ZP_BORDER_STYLE
+    lda     #6
+    sta     ZP_BORDER_WIDTH
+    lda     #7
+    sta     ZP_BORDER_HEIGHT
+    jsr     draw_border
+
+    lda     #25
+    sta     ZP_BORDER_ROW
+    lda     #70
+    sta     ZP_BORDER_COL
+    lda     #0
+    sta     ZP_BORDER_GROUP
+    lda     #1
+    sta     ZP_BORDER_PALETTE
+    lda     #$33
+    sta     ZP_BORDER_STYLE
+    lda     #6
+    sta     ZP_BORDER_WIDTH
+    lda     #7
+    sta     ZP_BORDER_HEIGHT
+    jsr     draw_border
+
+    lda     #35
+    sta     ZP_BORDER_ROW
+    lda     #100
+    sta     ZP_BORDER_COL
+    lda     #0
+    sta     ZP_BORDER_GROUP
+    lda     #1
+    sta     ZP_BORDER_PALETTE
+    lda     #$31
+    sta     ZP_BORDER_STYLE
+    lda     #6
+    sta     ZP_BORDER_WIDTH
+    lda     #7
     sta     ZP_BORDER_HEIGHT
     jsr     draw_border
 
