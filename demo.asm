@@ -14,6 +14,7 @@
 .include "x16.inc"
 .include "zeropage.inc"
 .include "text.inc"
+.include "borders.inc"
 
 default_irq_vector: .addr 0
 

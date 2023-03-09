@@ -63,110 +63,62 @@ TEXT_L1_MAP_BASE_ADDRESS_SHIFTED = (TEXT_L1_MAP_BASE_ADDRESS>>9)
 
 ; Values that are absolute (not relative to start of tile group)
 
-TILE_GROUP_A_NUM_USED_CHARS         = 96
-TILE_GROUP_A_NUM_FREE_CHARS         = 21
-TILE_GROUP_A_NUM_CHARS              = (TILE_GROUP_A_NUM_USED_CHARS+TILE_GROUP_A_NUM_FREE_CHARS)
+TILE_GROUP_A_NUM_CHARS              = 169
 TILE_GROUP_A_OFFSET_0_INDEX_START   = 0
 TILE_GROUP_A_OFFSET_4_INDEX_START   = (TILE_GROUP_A_OFFSET_0_INDEX_START+TILE_GROUP_A_NUM_CHARS)
 TILE_GROUP_A_TOTAL_TILES            = (TILE_GROUP_A_NUM_CHARS*3)
 
-TILE_GROUP_B_NUM_USED_CHARS         = 96
-TILE_GROUP_B_NUM_FREE_CHARS         = 21
-TILE_GROUP_B_NUM_CHARS              = (TILE_GROUP_B_NUM_USED_CHARS+TILE_GROUP_B_NUM_FREE_CHARS)
+TILE_GROUP_B_NUM_CHARS              = 169
 TILE_GROUP_B_OFFSET_0_INDEX_START   = TILE_GROUP_A_TOTAL_TILES
 TILE_GROUP_B_OFFSET_4_INDEX_START   = (TILE_GROUP_B_OFFSET_0_INDEX_START+TILE_GROUP_B_NUM_CHARS)
 TILE_GROUP_B_TOTAL_TILES            = (TILE_GROUP_B_NUM_CHARS*3)
 
-TILE_GROUP_C_NUM_USED_CHARS         = 86
-TILE_GROUP_C_NUM_FREE_CHARS         = 21
-TILE_GROUP_C_NUM_CHARS              = (TILE_GROUP_C_NUM_USED_CHARS+TILE_GROUP_C_NUM_FREE_CHARS)
-TILE_GROUP_C_OFFSET_0_INDEX_START   = (TILE_GROUP_A_TOTAL_TILES+TILE_GROUP_B_TOTAL_TILES)
-TILE_GROUP_C_OFFSET_4_INDEX_START   = (TILE_GROUP_C_OFFSET_0_INDEX_START+TILE_GROUP_C_NUM_CHARS)
-TILE_GROUP_C_TOTAL_TILES            = (TILE_GROUP_C_NUM_CHARS*3)
-
 ; Tile indexes relative to start of tile group
 
 TILE_GROUP_A_OFFSET_0_INDEX_BLANK   = 0
-TILE_GROUP_A_OFFSET_0_INDEX_EMPTY   = (TILE_GROUP_A_NUM_USED_CHARS-1)
-TILE_GROUP_A_OFFSET_0_INDEX_FREE    = TILE_GROUP_A_NUM_USED_CHARS
+TILE_GROUP_A_OFFSET_0_INDEX_EMPTY   = 95
 TILE_GROUP_A_OFFSET_4_INDEX_BLANK   = TILE_GROUP_A_NUM_CHARS
 TILE_GROUP_A_OFFSET_4_INDEX_EMPTY   = (TILE_GROUP_A_OFFSET_4_INDEX_BLANK+TILE_GROUP_A_OFFSET_0_INDEX_EMPTY*2)
-TILE_GROUP_A_OFFSET_4_INDEX_FREE    = (TILE_GROUP_A_OFFSET_4_INDEX_BLANK+TILE_GROUP_A_OFFSET_0_INDEX_FREE*2)
 
 TILE_GROUP_B_OFFSET_0_INDEX_BLANK   = 0
-TILE_GROUP_B_OFFSET_0_INDEX_EMPTY   = (TILE_GROUP_B_NUM_USED_CHARS-1)
-TILE_GROUP_B_OFFSET_0_INDEX_FREE    = TILE_GROUP_B_NUM_USED_CHARS
+TILE_GROUP_B_OFFSET_0_INDEX_EMPTY   = 95
 TILE_GROUP_B_OFFSET_4_INDEX_BLANK   = TILE_GROUP_B_NUM_CHARS
 TILE_GROUP_B_OFFSET_4_INDEX_EMPTY   = (TILE_GROUP_B_OFFSET_4_INDEX_BLANK+TILE_GROUP_B_OFFSET_0_INDEX_EMPTY*2)
-TILE_GROUP_B_OFFSET_4_INDEX_FREE    = (TILE_GROUP_B_OFFSET_4_INDEX_BLANK+TILE_GROUP_B_OFFSET_0_INDEX_FREE*2)
-
-TILE_GROUP_C_OFFSET_0_INDEX_BLANK   = 0
-TILE_GROUP_C_OFFSET_0_INDEX_EMPTY   = (TILE_GROUP_C_NUM_USED_CHARS-1)
-TILE_GROUP_C_OFFSET_0_INDEX_FREE    = TILE_GROUP_C_NUM_USED_CHARS
-TILE_GROUP_C_OFFSET_4_INDEX_BLANK   = TILE_GROUP_C_NUM_CHARS
-TILE_GROUP_C_OFFSET_4_INDEX_EMPTY   = (TILE_GROUP_C_OFFSET_4_INDEX_BLANK+TILE_GROUP_C_OFFSET_0_INDEX_EMPTY*2)
-TILE_GROUP_C_OFFSET_4_INDEX_FREE    = (TILE_GROUP_C_OFFSET_4_INDEX_BLANK+TILE_GROUP_C_OFFSET_0_INDEX_FREE*2)
 
 ; Structure to hold above constants, per tile group
 
     .struct TileGroupLimits
-        num_used_chars              .word
-        num_free_chars              .word
         num_chars                   .word
         offset_0_index_start        .word
         offset_4_index_start        .word
         total_tiles                 .word
         offset_0_index_blank        .word
         offset_0_index_empty        .word
-        offset_0_index_free         .word
         offset_4_index_blank        .word
         offset_4_index_empty        .word
-        offset_4_index_free         .word
     .endstruct
 
 tile_group_limits:
 
 tile_group_a:   ; TileGroupLimits
-    .word   TILE_GROUP_A_NUM_USED_CHARS
-    .word   TILE_GROUP_A_NUM_FREE_CHARS
     .word   TILE_GROUP_A_NUM_CHARS
     .word   TILE_GROUP_A_OFFSET_0_INDEX_START
     .word   TILE_GROUP_A_OFFSET_4_INDEX_START
     .word   TILE_GROUP_A_TOTAL_TILES
     .word   TILE_GROUP_A_OFFSET_0_INDEX_BLANK
     .word   TILE_GROUP_A_OFFSET_0_INDEX_EMPTY
-    .word   TILE_GROUP_A_OFFSET_0_INDEX_FREE
     .word   TILE_GROUP_A_OFFSET_4_INDEX_BLANK
     .word   TILE_GROUP_A_OFFSET_4_INDEX_EMPTY
-    .word   TILE_GROUP_A_OFFSET_4_INDEX_FREE
 
 tile_group_b:   ; TileGroupLimits
-    .word   TILE_GROUP_B_NUM_USED_CHARS
-    .word   TILE_GROUP_B_NUM_FREE_CHARS
     .word   TILE_GROUP_B_NUM_CHARS
     .word   TILE_GROUP_B_OFFSET_0_INDEX_START
     .word   TILE_GROUP_B_OFFSET_4_INDEX_START
     .word   TILE_GROUP_B_TOTAL_TILES
     .word   TILE_GROUP_B_OFFSET_0_INDEX_BLANK
     .word   TILE_GROUP_B_OFFSET_0_INDEX_EMPTY
-    .word   TILE_GROUP_B_OFFSET_0_INDEX_FREE
     .word   TILE_GROUP_B_OFFSET_4_INDEX_BLANK
     .word   TILE_GROUP_B_OFFSET_4_INDEX_EMPTY
-    .word   TILE_GROUP_B_OFFSET_4_INDEX_FREE
-
-tile_group_C:   ; TileGroupLimits
-    .word   TILE_GROUP_C_NUM_USED_CHARS
-    .word   TILE_GROUP_C_NUM_FREE_CHARS
-    .word   TILE_GROUP_C_NUM_CHARS
-    .word   TILE_GROUP_C_OFFSET_0_INDEX_START
-    .word   TILE_GROUP_C_OFFSET_4_INDEX_START
-    .word   TILE_GROUP_C_TOTAL_TILES
-    .word   TILE_GROUP_C_OFFSET_0_INDEX_BLANK
-    .word   TILE_GROUP_C_OFFSET_0_INDEX_EMPTY
-    .word   TILE_GROUP_C_OFFSET_0_INDEX_FREE
-    .word   TILE_GROUP_C_OFFSET_4_INDEX_BLANK
-    .word   TILE_GROUP_C_OFFSET_4_INDEX_EMPTY
-    .word   TILE_GROUP_C_OFFSET_4_INDEX_FREE
 
 ;-------------------------------------------------------------------
 ; Load text character pixel data
@@ -357,10 +309,10 @@ compute_2nd_tile_map_address:
 compute_1st_tile_map_address:
     lda     ZP_PARAM_COL            ; get character column index
 compute_address:
-    sta     ZP_CURRENT_COL          ; save current column index
+    sta     ZP_TEMP_COL             ; save current column index
     jsr     convert_screen_col_to_map_col
-    bbs1    ZP_CURRENT_COL,case_2_or_3 ; go if column % 4 equals 2 or 3
-    bbs0    ZP_CURRENT_COL,case_1   ; go if column % 4 equals 1
+    bbs1    ZP_TEMP_COL,case_2_or_3 ; go if column % 4 equals 2 or 3
+    bbs0    ZP_TEMP_COL,case_1      ; go if column % 4 equals 1
 
 case_0:
     ; 1st character is on L0, using pixel offset 0
@@ -374,7 +326,7 @@ case_1:
     jmp     convert_map_col_to_address_l1
 
 case_2_or_3:
-    bbs0    ZP_CURRENT_COL,case_3   ; go if column % 4 equals 3
+    bbs0    ZP_TEMP_COL,case_3      ; go if column % 4 equals 3
 
 case_2:
     ; 1st character is on L0, using pixel offset 4
@@ -400,9 +352,6 @@ compute_char_info:
     lda     ZP_PARAM_GROUP              ; get tile group number
     beq     use_tile_grp                ; go if using tile group A
     ldx     #.sizeof(TileGroupLimits)   ; advance offset to be tile group B
-    dec                                 ; decrement tile group number
-    beq     use_tile_grp                ; go if using tile group b
-    ldx     #.sizeof(TileGroupLimits)*2 ; advance offset to be tile group C
 use_tile_grp:
     lda     ZP_PARAM_PALETTE            ; get palette offset number
     asl                                 ; shift it into bits (7:4)
@@ -420,23 +369,31 @@ use_tile_grp:
     ora     ZP_CHAR_ATTR                ; include shifted palette offset
     sta     ZP_TILE_ATTR_0              ; set tile attributes & tile index (HI)
 
+    ldy     #0                          ; will hold shifted HI bit
     lda     ZP_PARAM_CODE               ; get character code parameter
     asl                                 ; multiply by 2
+    bcc     keep_x                      ; go if no overflow
+    iny                                 ; increment HI part to add
+keep_x:
     clc
     adc     tile_group_limits+TileGroupLimits::offset_4_index_start,x
     sta     ZP_TILE_INDEX_4A            ; set offset 4 tile index (part A, LO)
-    lda     #0                          ; prepare to add HI part
+    tya                                 ; prepare to add HI part
     adc     tile_group_limits+TileGroupLimits::offset_4_index_start+1,x
     ora     ZP_CHAR_ATTR                ; include shifted palette offset
     sta     ZP_TILE_ATTR_4A             ; set tile attributes & tile index (part A, HI)
 
+    ldy     #0                          ; will hold shifted HI bit
     lda     ZP_PARAM_CODE               ; get character code parameter
     asl                                 ; multiply by 2
+    bcc     keep_x2                     ; go if no overflow
+    iny                                 ; increment HI part to add
+keep_x2:
     inc                                 ; advance to part B of offset 4 character
     clc
     adc     tile_group_limits+TileGroupLimits::offset_4_index_start,x
     sta     ZP_TILE_INDEX_4B            ; set offset 4 tile index (part B, LO)
-    lda     #0                          ; prepare to add HI part
+    tya                                 ; prepare to add HI part
     adc     tile_group_limits+TileGroupLimits::offset_4_index_start+1,x
     ora     ZP_CHAR_ATTR                ; include shifted palette offset
     sta     ZP_TILE_ATTR_4B             ; set tile attributes & tile index (part B, HI)
