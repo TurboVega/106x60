@@ -167,3 +167,102 @@ border_style_definitions:
 
 end_border_style_definitions:
 
+; Compute a pointer to the current style definition
+;
+find_border_style:
+    lda     #<border_style_definitions  ; get pointer to style #0 (LO)
+    sta     ZP_STYLE_PTR_LO             ; init pointer to style (LO)
+    lda     #>border_style_definitions  ; get pointer to style #0 (HI)
+    sta     ZP_STYLE_PTR_HI             ; init pointer to style (HI)
+    ldx     #NUM_BORDER_STYLES          ; init style counter
+style_loop:
+    ldy     #BorderStyleDefinition::style_code_hex
+    lda     (ZP_STYLE_PTR),y            ; get first valid style number
+    cmp     ZP_BORDER_STYLE             ; compare to given border style number
+    beq     have_style                  ; go if match
+    ldy     #BorderStyleDefinition::style_code_dec
+    lda     (ZP_STYLE_PTR),y            ; get first valid style number
+    cmp     ZP_BORDER_STYLE             ; compare to given border style number
+    beq     have_style                  ; go if match
+    clc
+    lda     ZP_STYLE_PTR_LO             ; get pointer to style (LO)
+    adc     #<.sizeof(BorderStyleDefinition) ; add size of border style definition (LO)
+    sta     ZP_STYLE_PTR_LO             ; set pointer to style (LO)
+    lda     ZP_STYLE_PTR_HI             ; get pointer to style (HI)
+    adc     #>.sizeof(BorderStyleDefinition) ; add size of border style definition (HI)
+    sta     ZP_STYLE_PTR_HI             ; set pointer to style (HI)
+    dex                                 ; found correct style yet?
+    bne     style_loop                  ; back if no
+have_style:
+    rts
+
+; Draw a border
+;
+draw_border:
+    jsr     find_border_style           ; compute pointer to border style definition
+    lda     ZP_BORDER_GROUP             ; copy the border group to the character param group
+    sta     ZP_PARAM_GROUP
+    lda     ZP_BORDER_PALETTE           ; copy the border palette to the character param palette
+    sta     ZP_PARAM_PALETTE
+
+    ; draw the upper-left corner
+    lda     ZP_BORDER_ROW
+    sta     ZP_PARAM_ROW
+    lda     ZP_BORDER_COL
+    sta     ZP_PARAM_COL
+    lda     #1
+    sta     ZP_PARAM_CNT
+    ldy     #BorderStyleDefinition::upper_left_code
+    lda     (ZP_STYLE_PTR),y
+    sta     ZP_PARAM_CODE               ; set character code
+    jsr     write_repeated_char
+
+    ; draw the upper-right corner
+    lda     ZP_BORDER_ROW
+    sta     ZP_PARAM_ROW
+    lda     ZP_BORDER_COL
+    clc
+    adc     ZP_BORDER_WIDTH
+    dec
+    sta     ZP_PARAM_COL
+    lda     #1
+    sta     ZP_PARAM_CNT
+    ldy     #BorderStyleDefinition::upper_right_code
+    lda     (ZP_STYLE_PTR),y
+    sta     ZP_PARAM_CODE               ; set character code
+    jsr     write_repeated_char
+
+    ; draw the lower-left corner
+    lda     ZP_BORDER_ROW
+    clc
+    adc     ZP_BORDER_HEIGHT
+    dec
+    sta     ZP_PARAM_ROW
+    lda     ZP_BORDER_COL
+    sta     ZP_PARAM_COL
+    lda     #1
+    sta     ZP_PARAM_CNT
+    ldy     #BorderStyleDefinition::lower_left_code
+    lda     (ZP_STYLE_PTR),y
+    sta     ZP_PARAM_CODE               ; set character code
+    jsr     write_repeated_char
+
+    ; draw the lower-right corner
+    lda     ZP_BORDER_ROW
+    clc
+    adc     ZP_BORDER_HEIGHT
+    dec
+    sta     ZP_PARAM_ROW
+    lda     ZP_BORDER_COL
+    clc
+    adc     ZP_BORDER_WIDTH
+    dec
+    sta     ZP_PARAM_COL
+    lda     #1
+    sta     ZP_PARAM_CNT
+    ldy     #BorderStyleDefinition::lower_right_code
+    lda     (ZP_STYLE_PTR),y
+    sta     ZP_PARAM_CODE               ; set character code
+    jsr     write_repeated_char
+
+    rts

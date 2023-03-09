@@ -98,6 +98,22 @@ start:
     sta     ZP_PARAM_COL
     jsr     write_repeated_char
 
+    lda     #35
+    sta     ZP_BORDER_ROW
+    lda     #50
+    sta     ZP_BORDER_COL
+    lda     #0
+    sta     ZP_BORDER_GROUP
+    lda     #1
+    sta     ZP_BORDER_PALETTE
+    lda     #0
+    sta     ZP_BORDER_STYLE
+    lda     #10
+    sta     ZP_BORDER_WIDTH
+    lda     #15
+    sta     ZP_BORDER_HEIGHT
+    jsr     draw_border
+
     stz     VERA_ctrl     ; no reset/DCSEL/ADDRSEL
     lda     #ENABLE_LAYER_0|ENABLE_LAYER_1|OUTPUT_MODE_VGA
     sta     VERA_dc_video
