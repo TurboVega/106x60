@@ -341,4 +341,30 @@ vert_loop2:
     dec     ZP_BORDER_CNT
     bne     vert_loop2
 
+    ; fill the box inside the border, if desired
+    lda     ZP_BORDER_FILL
+    beq     leave_box_empty
+    lda     ZP_BORDER_HEIGHT
+    dec
+    dec
+    bmi     leave_box_empty
+    sta     ZP_BORDER_CNT
+fill_one_row:
+    lda     ZP_BORDER_ROW
+    inc
+    sta     ZP_PARAM_ROW
+    lda     ZP_BORDER_COL
+    inc
+    sta     ZP_PARAM_COL
+    lda     ZP_BORDER_WIDTH
+    dec
+    dec
+    sta     ZP_PARAM_CNT
+    lda     #TILE_GROUP_A_OFFSET_0_INDEX_BLANK
+    sta     ZP_PARAM_CODE               ; set character code
+    jsr     write_repeated_char
+    inc     ZP_BORDER_ROW
+    dec     ZP_BORDER_CNT
+    bne     fill_one_row
+leave_box_empty:
     rts

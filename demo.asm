@@ -18,6 +18,10 @@
 
 default_irq_vector: .addr 0
 
+text_array:
+    .res    96
+end_text_array:
+
 start:
     stz     VERA_ctrl     ; no reset/DCSEL/ADDRSEL
     stz     VERA_dc_video ; disable display
@@ -32,74 +36,58 @@ start:
     jsr     load_palette
     jsr     init_global_video_regs
     jsr     init_text_tile_information
-.if 0
-    lda     #2
+
+    lda     #1
     sta     ZP_PARAM_GROUP
     lda     #1
     sta     ZP_PARAM_PALETTE
-
-    lda     #$41-$20
-    sta     ZP_PARAM_CODE
-    lda     #4
-    sta     ZP_PARAM_CNT
+    lda     #end_text_array-text_array
+    sta     ZP_PARAM_STR_SIZE
+    lda     #<text_array
+    sta     ZP_PARAM_STR_PTR_LO
+    lda     #>text_array
+    sta     ZP_PARAM_STR_PTR_HI
     lda     #30
     sta     ZP_PARAM_ROW
     lda     #0
     sta     ZP_PARAM_COL
-    jsr     write_repeated_char
+    ldy     #0
+make_data:
+    tya
+    sta     (ZP_PARAM_STR_PTR),y
+    iny
+    cpy     #end_text_array-text_array
+    bne     make_data
+    jsr     write_array_of_char_code_indexes
 
-    lda     #110-$20
-    sta     ZP_PARAM_CODE
-    lda     #106
-    sta     ZP_PARAM_CNT
-    lda     #0
+    lda     #1
+    sta     ZP_PARAM_GROUP
+    lda     #1
+    sta     ZP_PARAM_PALETTE
+    lda     #end_text_array-text_array
+    sta     ZP_PARAM_STR_SIZE
+    lda     #<text_array
+    sta     ZP_PARAM_STR_PTR_LO
+    lda     #>text_array
+    sta     ZP_PARAM_STR_PTR_HI
+    lda     #31
     sta     ZP_PARAM_ROW
     lda     #0
     sta     ZP_PARAM_COL
-    jsr     write_repeated_char
+    ldy     #0
+make_data2:
+    tya
+    clc
+    adc     #$20
+    sta     (ZP_PARAM_STR_PTR),y
+    iny
+    cpy     #end_text_array-text_array
+    bne     make_data2
+    jsr     write_array_of_char_code_values
 
-    lda     #69-$20
-    sta     ZP_PARAM_CODE
-    lda     #50
-    sta     ZP_PARAM_CNT
-    lda     #5
-    sta     ZP_PARAM_ROW
-    lda     #0
-    sta     ZP_PARAM_COL
-    jsr     write_repeated_char
-
-    lda     #71-$20
-    sta     ZP_PARAM_CODE
-    lda     #50
-    sta     ZP_PARAM_CNT
-    lda     #6
-    sta     ZP_PARAM_ROW
-    lda     #50
-    sta     ZP_PARAM_COL
-    jsr     write_repeated_char
-
-    lda     #73-$20
-    sta     ZP_PARAM_CODE
-    lda     #6
-    sta     ZP_PARAM_CNT
-    lda     #7
-    sta     ZP_PARAM_ROW
-    lda     #100
-    sta     ZP_PARAM_COL
-    jsr     write_repeated_char
-
-    lda     #111-$20
-    sta     ZP_PARAM_CODE
-    lda     #106
-    sta     ZP_PARAM_CNT
-    lda     #59
-    sta     ZP_PARAM_ROW
-    lda     #0
-    sta     ZP_PARAM_COL
-    jsr     write_repeated_char
-.endif
-
-    lda     #35
+    lda     #1
+    sta     ZP_BORDER_FILL
+    lda     #21
     sta     ZP_BORDER_ROW
     lda     #50
     sta     ZP_BORDER_COL
@@ -115,11 +103,13 @@ start:
     sta     ZP_BORDER_HEIGHT
     jsr     draw_border
 
+    lda     #1
+    sta     ZP_BORDER_FILL
     lda     #12
     sta     ZP_BORDER_ROW
     lda     #12
     sta     ZP_BORDER_COL
-    lda     #0
+    lda     #1
     sta     ZP_BORDER_GROUP
     lda     #1
     sta     ZP_BORDER_PALETTE
@@ -131,6 +121,8 @@ start:
     sta     ZP_BORDER_HEIGHT
     jsr     draw_border
 
+    lda     #0
+    sta     ZP_BORDER_FILL
     lda     #25
     sta     ZP_BORDER_ROW
     lda     #40
@@ -147,11 +139,13 @@ start:
     sta     ZP_BORDER_HEIGHT
     jsr     draw_border
 
+    lda     #0
+    sta     ZP_BORDER_FILL
     lda     #28
     sta     ZP_BORDER_ROW
     lda     #57
     sta     ZP_BORDER_COL
-    lda     #0
+    lda     #1
     sta     ZP_BORDER_GROUP
     lda     #1
     sta     ZP_BORDER_PALETTE
@@ -195,7 +189,7 @@ start:
     sta     ZP_BORDER_HEIGHT
     jsr     draw_border
 
-    lda     #35
+    lda     #23
     sta     ZP_BORDER_ROW
     lda     #100
     sta     ZP_BORDER_COL

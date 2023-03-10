@@ -19,6 +19,7 @@ ZP_TEMP_INDEX_HI    = $33   ; temporary index for calculations (HI)
 ZP_CHAR_ATTR        = $34   ; palette offset, v-flip, h-flip
 ZP_TEMP_COL         = $35   ; current column for computations
 
+ZP_BORDER_FILL      = $37   ; if nonzero, fills the box with blank characters
 ZP_BORDER_ROW       = $38   ; border param: character row (line) index
 ZP_BORDER_COL       = $39   ; border param: character column index
 ZP_BORDER_CNT       = $3A   ; border param: number of characters to show
@@ -32,8 +33,14 @@ ZP_PARAM_ROW        = $40   ; character row (line) index
 ZP_PARAM_COL        = $41   ; character column index
 ZP_PARAM_CNT        = $42   ; number of characters to show
 ZP_PARAM_GROUP      = $43   ; which character tile group (0 or 1)
-ZP_PARAM_CODE       = $44   ; ASCII character code value or special code
+ZP_PARAM_CODE       = $44   ; Character index code value (not an ASCII code)
 ZP_PARAM_PALETTE    = $45   ; color palette offset (0..15)
+
+ZP_PARAM_STR_PTR    = $46   ; points to a string of character index codes (not ASCII codes)
+ZP_PARAM_STR_PTR_LO = $46
+ZP_PARAM_STR_PTR_HI = $47
+
+ZP_PARAM_STR_SIZE   = $48   ; size (length) of the string pointed to by ZP_PARAM_STR_PTR
 
 ZP_TILE_INDEX_0     = $50   ; tile index (LO) for 0 pixel offset image
 ZP_TILE_ATTR_0      = $51   ; tile attributes for 0 pixel offset image

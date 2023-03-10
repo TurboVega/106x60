@@ -25,8 +25,8 @@
 ; C04 = column index in layer 0 (0..105), for pixel offset 4 bits
 ; C10 = column index in layer 1 (0..211), for pixel offset 0 bits
 ; C14 = column index in layer 4 (0..211), for pixel offset 4 bits
-; L0X = layer 0 pixel X coordinate
-; L1X = layer 1 pixel X coordinate
+; L0X = layer 0 pixel X coordinate (ignoring the layer being shifted)
+; L1X = layer 1 pixel X coordinate (ignoring the layer being shifted)
 ; L0P = layer 0 pixels displayed
 ; L1P = layer 1 pixels displayed
 ; xxxxxx = one row within 6x8-pixel character cell (aaaaaa, bbbbbb, etc.)
@@ -121,7 +121,7 @@ tile_group_b:   ; TileGroupLimits
     .word   TILE_GROUP_B_OFFSET_4_INDEX_EMPTY
 
 ;-------------------------------------------------------------------
-; Load text character pixel data
+; Load text character pixel data and palette
 ;-------------------------------------------------------------------
 
 text:   .byte   "tilegrps.bin"
@@ -164,7 +164,7 @@ load_palette:
     rts
 
 ;-------------------------------------------------------------------
-; Initialize alphanumeric tile information.
+; Initialize layer tile information.
 ;-------------------------------------------------------------------
 
 init_text_tile_information:
@@ -218,7 +218,7 @@ init_text_cell:
     rts
 
 ;-------------------------------------------------------------------
-; Write text onto the screen.
+; Write text and/or border characters onto the screen.
 ;-------------------------------------------------------------------
 
 l0_pixel_map_row_addresses:
@@ -281,8 +281,7 @@ convert_map_col_to_address_l1:
     rts
 
 ; Compute a tile map index using the character column index.
-; Expects: A contains screen character column (0..105)
-; Outputs: ZP_TEMP_INDEX_LO, ZP_TEMP_INDEX_HI
+; To do this, we multiply by 75% (i.e., 3/4), in integer math.
 ;
 convert_screen_col_to_map_col:
     lsr                             ; divide by 2
@@ -299,8 +298,6 @@ convert_screen_col_to_map_col:
 ; and could use either 0 or 4 pixel offset. The corresponding
 ; tile map index is about 3/4ths (75%) as large as the original
 ; character column index, plus some possible small adjustment.
-; Expects: ZP_PARAM_COL, ZP_PARAM_ROW
-; Outputs: VERA_data0 or VERA_data1 address prepared
 ;
 compute_2nd_tile_map_address:
     lda     ZP_PARAM_COL            ; get character column index
@@ -400,7 +397,15 @@ keep_x2:
     rts
 
 ; Write a single character tile index multiple times
-; Expects: ZP_PARAM_CNT, ZP_PARAM_ROW, ZP_PARAM_COL, ZP_CHAR_ATTR
+;
+; The character code used here (ZP_PARAM_CODE) is actually a character index
+; into the tile data, so its range is $00 to $A8. Printable ASCII characters
+; that normally range from $20 to $7E must be reduced by $20 (yielding an index
+; ranging $00 to $5E) before this routine is called. The same is true for the
+; defined block characters that would range from $80 to $C8 (they must be
+; reduced to the range $60 to $A8). Note that character index $7F (reduced to
+; $5F) represents a completely empty (transparent) tile, which has no color,
+; neither foreground nor background.
 ;
 write_repeated_char:
     lda     ZP_PARAM_CNT            ; any more characters to do?
@@ -451,3 +456,61 @@ text_done:
 do_case_2_or_3:
     bbs0    ZP_PARAM_COL,do_case_3  ; go if column % 4 equals 3
     bra     do_case_2               ; go if column % 4 equals 2
+
+; Write a string of character indexes on a single row
+;
+; This routine expects ZP_PARAM_STR_PTR to point to a series of
+; reduced character/border code indexes (not ASCII codes). The number
+; of characters (size of the string) is given by ZP_PARAM_STR_SIZE.
+; Other values which must be given (setup prior to calling this
+; routine) are ZP_PARAM_ROW, ZP_PARAM_COL, ZP_PARAM_GROUP, and
+; ZP_PARAM_PALETTE.
+;
+write_array_of_char_code_indexes:
+    lda     ZP_PARAM_STR_SIZE       ; get the length of the string (array size)
+    beq     nothing_to_do           ; go if array is empty
+write_array_item:
+    lda     (ZP_PARAM_STR_PTR)      ; get one character code index
+    sta     ZP_PARAM_CODE           ; set which character code to write
+    lda     #1                      ; load number of similar characters to write
+    sta     ZP_PARAM_CNT            ; set number of similar characters to write
+    jsr     write_repeated_char     ; go write a single character code
+    inc     ZP_PARAM_COL            ; advance the column on the screen
+    inc     ZP_PARAM_STR_PTR_LO     ; advance the array pointer (LO)
+    bne     dont_inc2               ; go if no overflow
+    inc     ZP_PARAM_STR_PTR_HI     ; update the pointer (HI)
+dont_inc2:
+    dec     ZP_PARAM_STR_SIZE       ; one character is done; reduce the count
+    bne     write_array_item        ; back if more characters to write
+nothing_to_do:
+    rts
+
+; Write a string of ASCII and/or border characters on a single row
+;
+; This routine expects ZP_PARAM_STR_PTR to point to a series of
+; normal character code values (i.e., ASCII codes and/or border codes).
+; The number of characters (size of the string) is given by ZP_PARAM_STR_SIZE.
+; Other values which must be given (setup prior to calling this
+; routine) are ZP_PARAM_ROW, ZP_PARAM_COL, ZP_PARAM_GROUP, and
+; ZP_PARAM_PALETTE.
+;
+write_array_of_char_code_values:
+    lda     ZP_PARAM_STR_SIZE       ; get the length of the string (array size)
+    beq     nothing_to_do2          ; go if array is empty
+write_array_item2:
+    lda     (ZP_PARAM_STR_PTR)      ; get one character code value
+    sec                             ; prepare to subtract
+    sbc     #$20                    ; compute character code index
+    sta     ZP_PARAM_CODE           ; set which character code to write
+    lda     #1                      ; load number of similar characters to write
+    sta     ZP_PARAM_CNT            ; set number of similar characters to write
+    jsr     write_repeated_char     ; go write a single character code
+    inc     ZP_PARAM_COL            ; advance the column on the screen
+    inc     ZP_PARAM_STR_PTR_LO     ; advance the array pointer (LO)
+    bne     dont_inc4               ; go if no overflow
+    inc     ZP_PARAM_STR_PTR_HI     ; update the pointer (HI)
+dont_inc4:
+    dec     ZP_PARAM_STR_SIZE       ; one character is done; reduce the count
+    bne     write_array_item2       ; back if more characters to write
+nothing_to_do2:
+    rts
