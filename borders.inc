@@ -1,4 +1,3 @@
-
 ; File: borders.asm
 ; Purpose: Draw boxes, areas, and borders from characters
 ; Copyright (c) 2023 by Curtis Whitley
@@ -113,19 +112,19 @@ BORDER_T1_L2   = ($C8-$20) ; 186
 ;
 
     .struct BorderStyleDefinition
-        style_code_hex      .byte
-        style_code_dec      .byte
-        upper_left_code     .byte
-        upper_middle_code   .byte
-        upper_right_code    .byte
-        middle_right_code   .byte
-        lower_right_code    .byte
-        lower_middle_code   .byte
-        lower_left_code     .byte
-        middle_left_code    .byte
-        horizontal_code     .byte
-        vertical_code       .byte
-        cross_code          .byte
+        style_code_hex      .byte   ; border style as 2 hexadecimal digits (e.g., $21)
+        style_code_dec      .byte   ; border style as 2 decimal digits (e.g., 21)
+        upper_left_code     .byte   ; upper-left corner character tile index
+        upper_middle_code   .byte   ; upper-tee character tile index
+        upper_right_code    .byte   ; upper-right corner character tile index
+        middle_right_code   .byte   ; right-tee character tile index
+        lower_right_code    .byte   ; lower-right corner character tile index
+        lower_middle_code   .byte   ; lower-tee character tile index
+        lower_left_code     .byte   ; lower-left corner character tile index
+        middle_left_code    .byte   ; left-tee character tile index
+        horizontal_code     .byte   ; horizontal bar character tile index
+        vertical_code       .byte   ; vertical bar character tile index
+        cross_code          .byte   ; horizontal and vertical cross character tile index
     .endstruct
 
 border_style_definitions:
@@ -343,6 +342,7 @@ vert_loop2:
 
     ; fill the box inside the border, if desired
     lda     ZP_BORDER_FILL
+    cmp     #$FF
     beq     leave_box_empty
     lda     ZP_BORDER_HEIGHT
     dec

@@ -8,6 +8,17 @@ ZP_STYLE_PTR        = $22   ; border style pointer
 ZP_STYLE_PTR_LO     = $22
 ZP_STYLE_PTR_HI     = $23
 
+ZP_WINDOW_PTR       = $24   ; points to window parameters
+ZP_WINDOW_PTR_LO    = $24
+ZP_WINDOW_PTR_HI    = $25
+
+ZP_WINDOW_ROW       = $26   ; current row within a window
+ZP_WINDOW_COL       = $27   ; current column within a window
+ZP_WINDOW_START_ROW = $28   ; top-most row within a window
+ZP_WINDOW_START_COL = $29   ; left-most column within a window
+ZP_WINDOW_END_ROW   = $28   ; bottom-most row within a window
+ZP_WINDOW_END_COL   = $29   ; right-most column within a window
+
 ZP_PTR              = $30   ; temporary pointer
 ZP_PTR_LO           = $30
 ZP_PTR_HI           = $31
@@ -19,7 +30,7 @@ ZP_TEMP_INDEX_HI    = $33   ; temporary index for calculations (HI)
 ZP_CHAR_ATTR        = $34   ; palette offset, v-flip, h-flip
 ZP_TEMP_COL         = $35   ; current column for computations
 
-ZP_BORDER_FILL      = $37   ; if nonzero, fills the box with blank characters
+ZP_BORDER_FILL      = $37   ; border param: if not equal to $FF, fills the box with its value
 ZP_BORDER_ROW       = $38   ; border param: character row (line) index
 ZP_BORDER_COL       = $39   ; border param: character column index
 ZP_BORDER_CNT       = $3A   ; border param: number of characters to show
@@ -39,7 +50,6 @@ ZP_PARAM_PALETTE    = $45   ; color palette offset (0..15)
 ZP_PARAM_STR_PTR    = $46   ; points to a string of character index codes (not ASCII codes)
 ZP_PARAM_STR_PTR_LO = $46
 ZP_PARAM_STR_PTR_HI = $47
-
 ZP_PARAM_STR_SIZE   = $48   ; size (length) of the string pointed to by ZP_PARAM_STR_PTR
 
 ZP_TILE_INDEX_0     = $50   ; tile index (LO) for 0 pixel offset image
