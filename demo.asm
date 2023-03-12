@@ -57,6 +57,10 @@ start:
     FILLVRAM $00, $18000, $79C0
     FILLVRAM $00, $1FC00, $0400
 
+    stz     VERA_ctrl     ; no reset/DCSEL/ADDRSEL
+    lda     #ENABLE_LAYER_0|ENABLE_LAYER_1|OUTPUT_MODE_VGA
+    sta     VERA_dc_video
+
     jsr     load_text_data
     jsr     load_palette
     jsr     init_global_video_regs
@@ -90,11 +94,9 @@ make_data2:
     sta     ZP_WINDOW_PTR_HI
     jsr     create_window
 
+    lda     #39
+    sta     ZP_PARAM_STR_SIZE
     jsr     write_to_window
-
-    stz     VERA_ctrl     ; no reset/DCSEL/ADDRSEL
-    lda     #ENABLE_LAYER_0|ENABLE_LAYER_1|OUTPUT_MODE_VGA
-    sta     VERA_dc_video
 
 @main_loop:
     wai

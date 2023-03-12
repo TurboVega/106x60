@@ -123,6 +123,46 @@ update_window_position:
 ; Scroll a window vertically upward, opening the bottow row
 ;
 scroll_window_up:
+    lda     ZP_WINDOW_FIRST_ROW         ; get first row position
+    inc                                 ; move to second row position
+    sta     ZP_PARAM_ROW                ; move this row first
+    lda     ZP_WINDOW_LAST_ROW          ; get last row position
+    sec
+    sbc     ZP_WINDOW_FIRST_ROW         ; compute number of rows to scroll
+    sta     ZP_WINDOW_CNT_NOW           ; set number of rows to scroll
+    beq     clear_row                   ; go if nothing to do
+scroll_row:
+    lda     ZP_WINDOW_FIRST_COL         ; get first column position
+    sta     ZP_PARAM_COL                ; move this column first
+scroll_col:
+    lda     ZP_PARAM_COL                ; get column to scroll
+    cmp     ZP_WINDOW_END_COL           ; is the row done already?
+    bcs     row_done                    ; go if yes
+    jsr     read_screen_char_raw        ; read tile map data into variables
+    dec     ZP_PARAM_ROW                ; move up one row
+    lda     #1                          ; need to write one character
+    sta     ZP_PARAM_CNT                ; set number of characters to write
+    jsr     write_screen_raw_char       ; write tile map data from variables
+    inc     ZP_PARAM_ROW                ; move back down one row
+    inc     ZP_PARAM_COL                ; move over one column
+    bra     scroll_col                  ; continue scrolling columns
+row_done:
+    dec     ZP_WINDOW_CNT_NOW           ; we finished one row
+    bne     scroll_row                  ; if not done, continue scrolling
+clear_row:
+    lda     ZP_WINDOW_FIRST_COL         ; get first column position
+    sta     ZP_PARAM_COL                ; move this column first
+    lda     ZP_WINDOW_END_COL           ; get right border column position
+    sec
+    sbc     ZP_WINDOW_FIRST_COL         ; compute number of characters to erase
+    sta     ZP_PARAM_CNT                ; set number of characters to erase
+    ldy     #WindowParams::fill_char    ; load offset to the window fill character
+    lda     (ZP_WINDOW_PTR),y           ; get the window fill character
+    sec
+    sbc     #$20                        ; convert ASCII/border code to tile index
+    sta     ZP_PARAM_CODE               ; set the character code to write
+    jsr     write_repeated_char
+scroll_done:
     rts
 
 ; Write an array of text to a window
@@ -184,4 +224,4 @@ set_first_col:
     sta     ZP_WINDOW_CUR_COL           ; set new current column
     bra     write_string                ; continue writing until done
 write_done:
-    bra     update_window_position      ; go update the position and return
+    jmp     update_window_position      ; go update the position and return

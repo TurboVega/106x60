@@ -411,6 +411,7 @@ write_repeated_char:
     lda     ZP_PARAM_CNT            ; any more characters to do?
     beq     text_done               ; go if no
     jsr     compute_char_info
+write_screen_raw_char:
     jsr     compute_1st_tile_map_address
     jsr     compute_2nd_tile_map_address
     bbs1    ZP_PARAM_COL,do_case_2_or_3 ; go if column % 4 equals 2 or 3
@@ -514,3 +515,54 @@ dont_inc4:
     bne     write_array_item2       ; back if more characters to write
 nothing_to_do2:
     rts
+
+; Read a single character tile index and attributes from the screen
+;
+; The information is actually read from one of the two tile maps.
+;
+read_screen_char_raw:
+    jsr     compute_1st_tile_map_address
+    jsr     compute_2nd_tile_map_address
+    bbs1    ZP_PARAM_COL,rr_case_2_or_3 ; go if column % 4 equals 2 or 3
+    bbs0    ZP_PARAM_COL,rr_case_1      ; go if column % 4 equals 1
+rr_case_0:
+    lda     VERA_data0              ; get character tile data index
+    sta     ZP_TILE_INDEX_0         ; save character tile data index
+    lda     VERA_data0              ; get character tile attributes
+    sta     ZP_TILE_ATTR_0          ; save character tile attributes
+    lda     #0                      ; load case number
+    bra     set_case                ; go set case number and return
+rr_case_1:
+    lda     VERA_data1              ; get character tile data index A
+    sta     ZP_TILE_INDEX_4A        ; save character tile data index A
+    lda     VERA_data1              ; get character tile attributes A
+    sta     ZP_TILE_ATTR_4A         ; save character tile attributes A
+    lda     VERA_data1              ; get character tile data index B
+    sta     ZP_TILE_INDEX_4B        ; save character tile data index B
+    lda     VERA_data1              ; get character tile attributes B
+    sta     ZP_TILE_ATTR_4B         ; save character tile attributes B
+    lda     #1                      ; load case number
+    bra     set_case                ; go set case number and return
+rr_case_2:
+    lda     VERA_data0              ; get character tile data index A
+    sta     ZP_TILE_INDEX_4A        ; save character tile data index A
+    lda     VERA_data0              ; get character tile attributes A
+    sta     ZP_TILE_ATTR_4A         ; save character tile attributes A
+    lda     VERA_data0              ; get character tile data index B
+    sta     ZP_TILE_INDEX_4B        ; save character tile data index B
+    lda     VERA_data0              ; get character tile attributes B
+    sta     ZP_TILE_ATTR_4B         ; save character tile attributes B
+    lda     #2                      ; load case number
+    bra     set_case                ; go set case number and return
+rr_case_3:
+    lda     VERA_data1              ; get character tile data index
+    sta     ZP_TILE_INDEX_0         ; save character tile data index
+    lda     VERA_data1              ; get character tile attributes
+    sta     ZP_TILE_ATTR_0          ; save character tile attributes
+    lda     #3                      ; load case number
+set_case:
+    sta     ZP_PARAM_CASE_NUM       ; set case number
+    rts
+rr_case_2_or_3:
+    bbs0    ZP_PARAM_COL,rr_case_3  ; go if column % 4 equals 3
+    bra     rr_case_2               ; go if column % 4 equals 2

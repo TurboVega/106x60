@@ -20,7 +20,7 @@ ZP_WINDOW_LAST_ROW  = $2A   ; bottom-most writeable row within a window
 ZP_WINDOW_LAST_COL  = $2B   ; right-most writeable column within a window
 ZP_WINDOW_END_ROW   = $2C   ; bottom border row of a window
 ZP_WINDOW_END_COL   = $2D   ; right border column of a window
-ZP_WINDOW_CNT_NOW   = $2E   ; number of characters being written right now
+ZP_WINDOW_CNT_NOW   = $2E   ; number of characters being written, or rows scrolled, right now
 ZP_WINDOW_CNT_REM   = $2F   ; number of characters still remaining to write
 
 ZP_PTR              = $30   ; temporary pointer
@@ -55,6 +55,7 @@ ZP_PARAM_STR_PTR    = $46   ; points to a string of character index codes (not A
 ZP_PARAM_STR_PTR_LO = $46
 ZP_PARAM_STR_PTR_HI = $47
 ZP_PARAM_STR_SIZE   = $48   ; size (length) of the string pointed to by ZP_PARAM_STR_PTR
+ZP_PARAM_CASE_NUM   = $49   ; case for how tile map is accessed (0..3)
 
 ZP_TILE_INDEX_0     = $50   ; tile index (LO) for 0 pixel offset image
 ZP_TILE_ATTR_0      = $51   ; tile attributes for 0 pixel offset image
