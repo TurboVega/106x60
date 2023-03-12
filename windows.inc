@@ -147,8 +147,10 @@ scroll_col:
     inc     ZP_PARAM_COL                ; move over one column
     bra     scroll_col                  ; continue scrolling columns
 row_done:
+    inc     ZP_PARAM_ROW                ; move down to next row
     dec     ZP_WINDOW_CNT_NOW           ; we finished one row
     bne     scroll_row                  ; if not done, continue scrolling
+    dec     ZP_PARAM_ROW                ; move back to the row to clear
 clear_row:
     lda     ZP_WINDOW_FIRST_COL         ; get first column position
     sta     ZP_PARAM_COL                ; move this column first

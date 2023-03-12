@@ -94,8 +94,6 @@ make_data2:
     sta     ZP_WINDOW_PTR_HI
     jsr     create_window
 
-    lda     #39
-    sta     ZP_PARAM_STR_SIZE
     jsr     write_to_window
 
 @main_loop:
