@@ -3,29 +3,22 @@
 ; Copyright (c) 2023 by Curtis Whitley
 ;
 
-; In these border style values, the first digit (whether represented
-; in hexadecimal or decimal) tells the number of foreground-color
-; pixels in vertical lines. The second digit tells the number of
-; foreground-color pixels in horizontal lines.
+; In these border style values, the first (leftmost) decimal
+; digit tells the number of foreground-color pixels in vertical
+; lines. The second (rightmost) decimal digit tells the number
+; of foreground-color pixels in horizontal lines.
 ;
-BORDER_STYLE_V1_H1_HEX  = $11
-BORDER_STYLE_V1_H1_DEC  = 11
-BORDER_STYLE_V1_H2_HEX  = $12
-BORDER_STYLE_V1_H2_DEC  = 12
-BORDER_STYLE_V1_H3_HEX  = $13
-BORDER_STYLE_V1_H3_DEC  = 13
+BORDER_STYLE_V1_H1  = 11
+BORDER_STYLE_V1_H2  = 12
+BORDER_STYLE_V1_H3  = 13
 
-BORDER_STYLE_V2_H1_HEX  = $21
-BORDER_STYLE_V2_H1_DEC  = 21
-BORDER_STYLE_V2_H2_HEX  = $22
-BORDER_STYLE_V2_H2_DEC  = 22
+BORDER_STYLE_V2_H1  = 21
+BORDER_STYLE_V2_H2  = 22
 
-BORDER_STYLE_V3_H1_HEX  = $31
-BORDER_STYLE_V3_H1_DEC  = 31
-BORDER_STYLE_V3_H3_HEX  = $33
-BORDER_STYLE_V3_H3_DEC  = 33
+BORDER_STYLE_V3_H1  = 31
+BORDER_STYLE_V3_H3  = 33
 
-NUM_BORDER_STYLES       = 7
+NUM_BORDER_STYLES   = 7
 
 ; Character code numbers for border (box/line) characters.
 ; The commented numbers are indexes of sections of a bitmap
@@ -112,7 +105,6 @@ BORDER_T1_L2   = ($C8-$20) ; 186
 ;
 
     .struct BorderStyleDefinition
-        style_code_hex      .byte   ; border style as 2 hexadecimal digits (e.g., $21)
         style_code_dec      .byte   ; border style as 2 decimal digits (e.g., 21)
         upper_left_code     .byte   ; upper-left corner character tile index
         upper_middle_code   .byte   ; upper-tee character tile index
@@ -129,37 +121,37 @@ BORDER_T1_L2   = ($C8-$20) ; 186
 
 border_style_definitions:
 
-    .byte   BORDER_STYLE_V1_H1_HEX, BORDER_STYLE_V1_H1_DEC
+    .byte   BORDER_STYLE_V1_H1
     .byte   BORDER_B1_R1, BORDER_B1_H1, BORDER_B1_L1, BORDER_L1_V1
     .byte   BORDER_T1_L1, BORDER_T1_H1, BORDER_T1_R1, BORDER_R1_V1
     .byte   BORDER_H1, BORDER_V1, BORDER_V1_H1
 
-    .byte   BORDER_STYLE_V1_H2_HEX, BORDER_STYLE_V1_H2_DEC
+    .byte   BORDER_STYLE_V1_H2
     .byte   BORDER_B1_R2, BORDER_B1_H2, BORDER_B1_L2, BORDER_L2_V1
     .byte   BORDER_T1_L2, BORDER_T1_H2, BORDER_T1_R2, BORDER_R2_V1
     .byte   BORDER_H2, BORDER_V1, BORDER_V1_H2
 
-    .byte   BORDER_STYLE_V1_H3_HEX, BORDER_STYLE_V1_H3_DEC
+    .byte   BORDER_STYLE_V1_H3
     .byte   BORDER_B1_R3, BORDER_B1_H3, BORDER_B1_L3, BORDER_L3_V1
     .byte   BORDER_T1_L3, BORDER_T1_H3, BORDER_T1_R3, BORDER_R3_V1
     .byte   BORDER_H3, BORDER_V1, BORDER_V1_H3
 
-    .byte   BORDER_STYLE_V2_H1_HEX, BORDER_STYLE_V2_H1_DEC
+    .byte   BORDER_STYLE_V2_H1
     .byte   BORDER_B2_R1, BORDER_B2_H1, BORDER_B2_L1, BORDER_L1_V2
     .byte   BORDER_T2_L1, BORDER_T2_H1, BORDER_T2_R1, BORDER_R1_V2
     .byte   BORDER_H1, BORDER_V2, BORDER_V2_H1
 
-    .byte   BORDER_STYLE_V2_H2_HEX, BORDER_STYLE_V2_H2_DEC
+    .byte   BORDER_STYLE_V2_H2
     .byte   BORDER_B2_R2, BORDER_B2_H2, BORDER_B2_L2, BORDER_L2_V2
     .byte   BORDER_T2_L2, BORDER_T2_H2, BORDER_T2_R2, BORDER_R2_V2
     .byte   BORDER_H2, BORDER_V2, BORDER_V2_H2
 
-    .byte   BORDER_STYLE_V3_H1_HEX, BORDER_STYLE_V3_H1_DEC
+    .byte   BORDER_STYLE_V3_H1
     .byte   BORDER_B3_R1, BORDER_B3_H1, BORDER_B3_L1, BORDER_L1_V3
     .byte   BORDER_T3_L1, BORDER_T3_H1, BORDER_T3_R1, BORDER_R1_V3
     .byte   BORDER_H1, BORDER_V3, BORDER_V3_H1
 
-    .byte   BORDER_STYLE_V3_H3_HEX, BORDER_STYLE_V3_H3_DEC
+    .byte   BORDER_STYLE_V3_H3
     .byte   BORDER_B3_R3, BORDER_B3_H3, BORDER_B3_L3, BORDER_L3_V3
     .byte   BORDER_T3_L3, BORDER_T3_H3, BORDER_T3_R3, BORDER_R3_V3
     .byte   BORDER_H3, BORDER_V3, BORDER_V3_H3
@@ -175,10 +167,6 @@ find_border_style:
     sta     ZP_STYLE_PTR_HI             ; init pointer to style (HI)
     ldx     #NUM_BORDER_STYLES          ; init style counter
 style_loop:
-    ldy     #BorderStyleDefinition::style_code_hex
-    lda     (ZP_STYLE_PTR),y            ; get first valid style number
-    cmp     ZP_BORDER_STYLE             ; compare to given border style number
-    beq     have_style                  ; go if match
     ldy     #BorderStyleDefinition::style_code_dec
     lda     (ZP_STYLE_PTR),y            ; get first valid style number
     cmp     ZP_BORDER_STYLE             ; compare to given border style number

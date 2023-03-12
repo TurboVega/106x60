@@ -12,12 +12,16 @@ ZP_WINDOW_PTR       = $24   ; points to window parameters
 ZP_WINDOW_PTR_LO    = $24
 ZP_WINDOW_PTR_HI    = $25
 
-ZP_WINDOW_ROW       = $26   ; current row within a window
-ZP_WINDOW_COL       = $27   ; current column within a window
-ZP_WINDOW_START_ROW = $28   ; top-most row within a window
-ZP_WINDOW_START_COL = $29   ; left-most column within a window
-ZP_WINDOW_END_ROW   = $28   ; bottom-most row within a window
-ZP_WINDOW_END_COL   = $29   ; right-most column within a window
+ZP_WINDOW_CUR_ROW   = $26   ; current row within a window
+ZP_WINDOW_CUR_COL   = $27   ; current column within a window
+ZP_WINDOW_FIRST_ROW = $28   ; top-most writeable row within a window
+ZP_WINDOW_FIRST_COL = $29   ; left-most writeable column within a window
+ZP_WINDOW_LAST_ROW  = $2A   ; bottom-most writeable row within a window
+ZP_WINDOW_LAST_COL  = $2B   ; right-most writeable column within a window
+ZP_WINDOW_END_ROW   = $2C   ; bottom border row of a window
+ZP_WINDOW_END_COL   = $2D   ; right border column of a window
+ZP_WINDOW_CNT_NOW   = $2E   ; number of characters being written right now
+ZP_WINDOW_CNT_REM   = $2F   ; number of characters still remaining to write
 
 ZP_PTR              = $30   ; temporary pointer
 ZP_PTR_LO           = $30

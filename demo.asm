@@ -35,6 +35,18 @@ window_0:
     .byte   0   ; cur_row
     .byte   0   ; cur_col
 
+window_1:
+    .byte   10  ; upper_left_row
+    .byte   10  ; upper_left_col
+    .byte   1   ; tile_color_group
+    .byte   1   ; palette_offset
+    .byte   22  ; border_style
+    .byte   ' ' ; fill_char
+    .byte   15  ; total_width
+    .byte   5   ; total_height
+    .byte   0   ; cur_row
+    .byte   0   ; cur_col
+
 start:
     stz     VERA_ctrl     ; no reset/DCSEL/ADDRSEL
     stz     VERA_dc_video ; disable display
@@ -71,6 +83,14 @@ make_data2:
     lda     #>window_0
     sta     ZP_WINDOW_PTR_HI
     jsr     create_window
+
+    lda     #<window_1
+    sta     ZP_WINDOW_PTR_LO
+    lda     #>window_1
+    sta     ZP_WINDOW_PTR_HI
+    jsr     create_window
+
+    jsr     write_to_window
 
     stz     VERA_ctrl     ; no reset/DCSEL/ADDRSEL
     lda     #ENABLE_LAYER_0|ENABLE_LAYER_1|OUTPUT_MODE_VGA
