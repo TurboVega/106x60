@@ -201,7 +201,7 @@ draw_border:
     sta     ZP_PARAM_CNT
     ldy     #BorderStyleDefinition::upper_left_code
     lda     (ZP_STYLE_PTR),y
-    sta     ZP_PARAM_CODE               ; set character code
+    sta     ZP_PARAM_CODE
     jsr     write_repeated_char
 
     ; draw the upper-right corner
@@ -216,7 +216,7 @@ draw_border:
     sta     ZP_PARAM_CNT
     ldy     #BorderStyleDefinition::upper_right_code
     lda     (ZP_STYLE_PTR),y
-    sta     ZP_PARAM_CODE               ; set character code
+    sta     ZP_PARAM_CODE
     jsr     write_repeated_char
 
     ; draw the lower-left corner
@@ -231,7 +231,7 @@ draw_border:
     sta     ZP_PARAM_CNT
     ldy     #BorderStyleDefinition::lower_left_code
     lda     (ZP_STYLE_PTR),y
-    sta     ZP_PARAM_CODE               ; set character code
+    sta     ZP_PARAM_CODE
     jsr     write_repeated_char
 
     ; draw the lower-right corner
@@ -249,7 +249,7 @@ draw_border:
     sta     ZP_PARAM_CNT
     ldy     #BorderStyleDefinition::lower_right_code
     lda     (ZP_STYLE_PTR),y
-    sta     ZP_PARAM_CODE               ; set character code
+    sta     ZP_PARAM_CODE
     jsr     write_repeated_char
 
     ; draw the upper horizontal bar
@@ -264,7 +264,7 @@ draw_border:
     sta     ZP_PARAM_CNT
     ldy     #BorderStyleDefinition::horizontal_code
     lda     (ZP_STYLE_PTR),y
-    sta     ZP_PARAM_CODE               ; set character code
+    sta     ZP_PARAM_CODE
     jsr     write_repeated_char
 
     ; draw the lower horizontal bar
@@ -282,7 +282,7 @@ draw_border:
     sta     ZP_PARAM_CNT
     ldy     #BorderStyleDefinition::horizontal_code
     lda     (ZP_STYLE_PTR),y
-    sta     ZP_PARAM_CODE               ; set character code
+    sta     ZP_PARAM_CODE
     jsr     write_repeated_char
 
     ; draw the left vertical bar
@@ -296,7 +296,7 @@ draw_border:
     sta     ZP_BORDER_CNT
     ldy     #BorderStyleDefinition::vertical_code
     lda     (ZP_STYLE_PTR),y
-    sta     ZP_PARAM_CODE               ; set character code
+    sta     ZP_PARAM_CODE
 vert_loop:
     inc     ZP_PARAM_ROW
     lda     #1
@@ -319,7 +319,7 @@ vert_loop:
     sta     ZP_BORDER_CNT
     ldy     #BorderStyleDefinition::vertical_code
     lda     (ZP_STYLE_PTR),y
-    sta     ZP_PARAM_CODE               ; set character code
+    sta     ZP_PARAM_CODE
 vert_loop2:
     inc     ZP_PARAM_ROW
     lda     #1
@@ -348,8 +348,8 @@ fill_one_row:
     dec
     dec
     sta     ZP_PARAM_CNT
-    lda     #TILE_GROUP_A_OFFSET_0_INDEX_BLANK
-    sta     ZP_PARAM_CODE               ; set character code
+    lda     ZP_BORDER_FILL
+    sta     ZP_PARAM_CODE
     jsr     write_repeated_char
     inc     ZP_BORDER_ROW
     dec     ZP_BORDER_CNT

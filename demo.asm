@@ -34,9 +34,9 @@ palette_colors:
     PAL_RGB 0,0,8, 15,15,15, 0,0,8    ; palette offset 7
     PAL_RGB 12,12,0, 0,0,0, 12,12,0   ; palette offset 8
     PAL_RGB 0,8,0, 15,15,15, 0,8,0    ; palette offset 9
-    PAL_RGB 12,12,12, 0,0,0, 12,12,12  ; palette offset 10
+    PAL_RGB 12,12,12, 0,0,0, 12,12,12 ; palette offset 10
     PAL_RGB 5,5,5, 15,15,15, 5,5,5    ; palette offset 11
-    PAL_RGB 10,0,10, 15,15,15, 10,0,10  ; palette offset 12
+    PAL_RGB 6,0,6, 15,15,0, 6,0,6     ; palette offset 12
     PAL_RGB 14,0,14, 0,0,0, 14,0,14   ; palette offset 13
     PAL_RGB 0,12,12, 0,0,0, 0,12,12   ; palette offset 14
     PAL_RGB 4,8,12, 0,0,0, 4,8,12     ; palette offset 15
@@ -52,7 +52,7 @@ window_0:
     .byte   0   ; tile_color_group
     .byte   1   ; palette_offset
     .byte   11  ; border_style
-    .byte   0   ; fill_char
+    .byte   $20 ; fill_char
     .byte   18  ; total_width
     .byte   13  ; total_height
     .byte   0   ; cur_row
@@ -64,7 +64,7 @@ window_1:
     .byte   1   ; tile_color_group
     .byte   1   ; palette_offset
     .byte   12  ; border_style
-    .byte   0   ; fill_char
+    .byte   $20 ; fill_char
     .byte   18  ; total_width
     .byte   13  ; total_height
     .byte   0   ; cur_row
@@ -76,7 +76,7 @@ window_2:
     .byte   0   ; tile_color_group
     .byte   2   ; palette_offset
     .byte   13  ; border_style
-    .byte   0   ; fill_char
+    .byte   $20 ; fill_char
     .byte   18  ; total_width
     .byte   13  ; total_height
     .byte   0   ; cur_row
@@ -88,7 +88,7 @@ window_3:
     .byte   1   ; tile_color_group
     .byte   2   ; palette_offset
     .byte   13  ; border_style
-    .byte   0   ; fill_char
+    .byte   $20 ; fill_char
     .byte   18  ; total_width
     .byte   13  ; total_height
     .byte   0   ; cur_row
@@ -100,7 +100,7 @@ window_4:
     .byte   0   ; tile_color_group
     .byte   3   ; palette_offset
     .byte   13  ; border_style
-    .byte   0   ; fill_char
+    .byte   $20 ; fill_char
     .byte   18  ; total_width
     .byte   13  ; total_height
     .byte   0   ; cur_row
@@ -112,9 +112,237 @@ window_5:
     .byte   1   ; tile_color_group
     .byte   3   ; palette_offset
     .byte   13  ; border_style
-    .byte   0   ; fill_char
+    .byte   $20 ; fill_char
     .byte   16  ; total_width
     .byte   13  ; total_height
+    .byte   0   ; cur_row
+    .byte   0   ; cur_col
+
+window_b0:
+    .byte   13  ; upper_left_row
+    .byte   0   ; upper_left_col
+    .byte   0   ; tile_color_group
+    .byte   4   ; palette_offset
+    .byte   21  ; border_style
+    .byte   $20 ; fill_char
+    .byte   18  ; total_width
+    .byte   13  ; total_height
+    .byte   0   ; cur_row
+    .byte   0   ; cur_col
+
+window_b1:
+    .byte   13  ; upper_left_row
+    .byte   18  ; upper_left_col
+    .byte   1   ; tile_color_group
+    .byte   4   ; palette_offset
+    .byte   22  ; border_style
+    .byte   $20 ; fill_char
+    .byte   18  ; total_width
+    .byte   13  ; total_height
+    .byte   0   ; cur_row
+    .byte   0   ; cur_col
+
+window_b2:
+    .byte   13  ; upper_left_row
+    .byte   36  ; upper_left_col
+    .byte   0   ; tile_color_group
+    .byte   5   ; palette_offset
+    .byte   33  ; border_style
+    .byte   $20 ; fill_char
+    .byte   18  ; total_width
+    .byte   13  ; total_height
+    .byte   0   ; cur_row
+    .byte   0   ; cur_col
+
+window_b3:
+    .byte   13  ; upper_left_row
+    .byte   54  ; upper_left_col
+    .byte   1   ; tile_color_group
+    .byte   5   ; palette_offset
+    .byte   11  ; border_style
+    .byte   $20 ; fill_char
+    .byte   18  ; total_width
+    .byte   13  ; total_height
+    .byte   0   ; cur_row
+    .byte   0   ; cur_col
+
+window_b4:
+    .byte   13  ; upper_left_row
+    .byte   72  ; upper_left_col
+    .byte   0   ; tile_color_group
+    .byte   6   ; palette_offset
+    .byte   12  ; border_style
+    .byte   $20 ; fill_char
+    .byte   18  ; total_width
+    .byte   13  ; total_height
+    .byte   0   ; cur_row
+    .byte   0   ; cur_col
+
+window_b5:
+    .byte   13  ; upper_left_row
+    .byte   90  ; upper_left_col
+    .byte   1   ; tile_color_group
+    .byte   6   ; palette_offset
+    .byte   13  ; border_style
+    .byte   $20 ; fill_char
+    .byte   16  ; total_width
+    .byte   13  ; total_height
+    .byte   0   ; cur_row
+    .byte   0   ; cur_col
+
+window_c0:
+    .byte   26  ; upper_left_row
+    .byte   0   ; upper_left_col
+    .byte   0   ; tile_color_group
+    .byte   15  ; palette_offset
+    .byte   21  ; border_style
+    .byte   $20 ; fill_char
+    .byte   18  ; total_width
+    .byte   13  ; total_height
+    .byte   0   ; cur_row
+    .byte   0   ; cur_col
+
+window_c1:
+    .byte   26  ; upper_left_row
+    .byte   18  ; upper_left_col
+    .byte   1   ; tile_color_group
+    .byte   5   ; palette_offset
+    .byte   22  ; border_style
+    .byte   $20 ; fill_char
+    .byte   18  ; total_width
+    .byte   13  ; total_height
+    .byte   0   ; cur_row
+    .byte   0   ; cur_col
+
+window_c2:
+    .byte   26  ; upper_left_row
+    .byte   36  ; upper_left_col
+    .byte   0   ; tile_color_group
+    .byte   6   ; palette_offset
+    .byte   12  ; border_style
+    .byte   $20 ; fill_char
+    .byte   18  ; total_width
+    .byte   13  ; total_height
+    .byte   0   ; cur_row
+    .byte   0   ; cur_col
+
+window_c3:
+    .byte   26  ; upper_left_row
+    .byte   54  ; upper_left_col
+    .byte   1   ; tile_color_group
+    .byte   14  ; palette_offset
+    .byte   31  ; border_style
+    .byte   $20 ; fill_char
+    .byte   18  ; total_width
+    .byte   13  ; total_height
+    .byte   0   ; cur_row
+    .byte   0   ; cur_col
+
+window_c4:
+    .byte   26  ; upper_left_row
+    .byte   72  ; upper_left_col
+    .byte   0   ; tile_color_group
+    .byte   7   ; palette_offset
+    .byte   33  ; border_style
+    .byte   $20 ; fill_char
+    .byte   18  ; total_width
+    .byte   13  ; total_height
+    .byte   0   ; cur_row
+    .byte   0   ; cur_col
+
+window_c5:
+    .byte   26  ; upper_left_row
+    .byte   90  ; upper_left_col
+    .byte   1   ; tile_color_group
+    .byte   7   ; palette_offset
+    .byte   21  ; border_style
+    .byte   $20 ; fill_char
+    .byte   16  ; total_width
+    .byte   13  ; total_height
+    .byte   0   ; cur_row
+    .byte   0   ; cur_col
+
+window_d0:
+    .byte   39  ; upper_left_row
+    .byte   0   ; upper_left_col
+    .byte   0   ; tile_color_group
+    .byte   8   ; palette_offset
+    .byte   21  ; border_style
+    .byte   $20 ; fill_char
+    .byte   18  ; total_width
+    .byte   13  ; total_height
+    .byte   0   ; cur_row
+    .byte   0   ; cur_col
+
+window_d1:
+    .byte   39  ; upper_left_row
+    .byte   18  ; upper_left_col
+    .byte   1   ; tile_color_group
+    .byte   9   ; palette_offset
+    .byte   22  ; border_style
+    .byte   $20 ; fill_char
+    .byte   18  ; total_width
+    .byte   13  ; total_height
+    .byte   0   ; cur_row
+    .byte   0   ; cur_col
+
+window_d2:
+    .byte   39  ; upper_left_row
+    .byte   36  ; upper_left_col
+    .byte   0   ; tile_color_group
+    .byte   10  ; palette_offset
+    .byte   12  ; border_style
+    .byte   $20 ; fill_char
+    .byte   18  ; total_width
+    .byte   13  ; total_height
+    .byte   0   ; cur_row
+    .byte   0   ; cur_col
+
+window_d3:
+    .byte   39  ; upper_left_row
+    .byte   54  ; upper_left_col
+    .byte   1   ; tile_color_group
+    .byte   11  ; palette_offset
+    .byte   31  ; border_style
+    .byte   $20 ; fill_char
+    .byte   18  ; total_width
+    .byte   13  ; total_height
+    .byte   0   ; cur_row
+    .byte   0   ; cur_col
+
+window_d4:
+    .byte   39  ; upper_left_row
+    .byte   72  ; upper_left_col
+    .byte   1   ; tile_color_group
+    .byte   12  ; palette_offset
+    .byte   33  ; border_style
+    .byte   $20 ; fill_char
+    .byte   18  ; total_width
+    .byte   13  ; total_height
+    .byte   0   ; cur_row
+    .byte   0   ; cur_col
+
+window_d5:
+    .byte   39  ; upper_left_row
+    .byte   90  ; upper_left_col
+    .byte   1   ; tile_color_group
+    .byte   13  ; palette_offset
+    .byte   21  ; border_style
+    .byte   $20 ; fill_char
+    .byte   16  ; total_width
+    .byte   13  ; total_height
+    .byte   0   ; cur_row
+    .byte   0   ; cur_col
+
+window_e:
+    .byte   52  ; upper_left_row
+    .byte   0   ; upper_left_col
+    .byte   1   ; tile_color_group
+    .byte   6   ; palette_offset
+    .byte   11  ; border_style
+    .byte   $2E ; fill_char
+    .byte   106 ; total_width
+    .byte   8   ; total_height
     .byte   0   ; cur_row
     .byte   0   ; cur_col
 
@@ -264,6 +492,253 @@ make_data2:
     lda     #<window_5
     sta     ZP_WINDOW_PTR_LO
     lda     #>window_5
+    sta     ZP_WINDOW_PTR_HI
+    jsr     create_window
+    lda     #<text_array
+    sta     ZP_PARAM_STR_PTR_LO
+    lda     #>text_array
+    sta     ZP_PARAM_STR_PTR_HI
+    lda     #end_text_array-text_array
+    sta     ZP_PARAM_STR_SIZE
+    jsr     write_to_window
+
+    lda     #<window_b0
+    sta     ZP_WINDOW_PTR_LO
+    lda     #>window_b0
+    sta     ZP_WINDOW_PTR_HI
+    jsr     create_window
+    lda     #<text_array
+    sta     ZP_PARAM_STR_PTR_LO
+    lda     #>text_array
+    sta     ZP_PARAM_STR_PTR_HI
+    lda     #end_text_array-text_array
+    sta     ZP_PARAM_STR_SIZE
+    jsr     write_to_window
+
+    lda     #<window_b1
+    sta     ZP_WINDOW_PTR_LO
+    lda     #>window_b1
+    sta     ZP_WINDOW_PTR_HI
+    jsr     create_window
+    lda     #<text_array
+    sta     ZP_PARAM_STR_PTR_LO
+    lda     #>text_array
+    sta     ZP_PARAM_STR_PTR_HI
+    lda     #end_text_array-text_array
+    sta     ZP_PARAM_STR_SIZE
+    jsr     write_to_window
+
+    lda     #<window_b2
+    sta     ZP_WINDOW_PTR_LO
+    lda     #>window_b2
+    sta     ZP_WINDOW_PTR_HI
+    jsr     create_window
+    lda     #<text_array
+    sta     ZP_PARAM_STR_PTR_LO
+    lda     #>text_array
+    sta     ZP_PARAM_STR_PTR_HI
+    lda     #end_text_array-text_array
+    sta     ZP_PARAM_STR_SIZE
+    jsr     write_to_window
+
+    lda     #<window_b3
+    sta     ZP_WINDOW_PTR_LO
+    lda     #>window_b3
+    sta     ZP_WINDOW_PTR_HI
+    jsr     create_window
+    lda     #<text_array
+    sta     ZP_PARAM_STR_PTR_LO
+    lda     #>text_array
+    sta     ZP_PARAM_STR_PTR_HI
+    lda     #end_text_array-text_array
+    sta     ZP_PARAM_STR_SIZE
+    jsr     write_to_window
+
+    lda     #<window_b4
+    sta     ZP_WINDOW_PTR_LO
+    lda     #>window_b4
+    sta     ZP_WINDOW_PTR_HI
+    jsr     create_window
+    lda     #<text_array
+    sta     ZP_PARAM_STR_PTR_LO
+    lda     #>text_array
+    sta     ZP_PARAM_STR_PTR_HI
+    lda     #end_text_array-text_array
+    sta     ZP_PARAM_STR_SIZE
+    jsr     write_to_window
+
+    lda     #<window_b5
+    sta     ZP_WINDOW_PTR_LO
+    lda     #>window_b5
+    sta     ZP_WINDOW_PTR_HI
+    jsr     create_window
+    lda     #<text_array
+    sta     ZP_PARAM_STR_PTR_LO
+    lda     #>text_array
+    sta     ZP_PARAM_STR_PTR_HI
+    lda     #end_text_array-text_array
+    sta     ZP_PARAM_STR_SIZE
+    jsr     write_to_window
+
+    lda     #<window_c0
+    sta     ZP_WINDOW_PTR_LO
+    lda     #>window_c0
+    sta     ZP_WINDOW_PTR_HI
+    jsr     create_window
+    lda     #<text_array
+    sta     ZP_PARAM_STR_PTR_LO
+    lda     #>text_array
+    sta     ZP_PARAM_STR_PTR_HI
+    lda     #end_text_array-text_array
+    sta     ZP_PARAM_STR_SIZE
+    jsr     write_to_window
+
+    lda     #<window_c1
+    sta     ZP_WINDOW_PTR_LO
+    lda     #>window_c1
+    sta     ZP_WINDOW_PTR_HI
+    jsr     create_window
+    lda     #<text_array
+    sta     ZP_PARAM_STR_PTR_LO
+    lda     #>text_array
+    sta     ZP_PARAM_STR_PTR_HI
+    lda     #end_text_array-text_array
+    sta     ZP_PARAM_STR_SIZE
+    jsr     write_to_window
+
+    lda     #<window_c2
+    sta     ZP_WINDOW_PTR_LO
+    lda     #>window_c2
+    sta     ZP_WINDOW_PTR_HI
+    jsr     create_window
+    lda     #<text_array
+    sta     ZP_PARAM_STR_PTR_LO
+    lda     #>text_array
+    sta     ZP_PARAM_STR_PTR_HI
+    lda     #end_text_array-text_array
+    sta     ZP_PARAM_STR_SIZE
+    jsr     write_to_window
+
+    lda     #<window_c3
+    sta     ZP_WINDOW_PTR_LO
+    lda     #>window_c3
+    sta     ZP_WINDOW_PTR_HI
+    jsr     create_window
+    lda     #<text_array
+    sta     ZP_PARAM_STR_PTR_LO
+    lda     #>text_array
+    sta     ZP_PARAM_STR_PTR_HI
+    lda     #end_text_array-text_array
+    sta     ZP_PARAM_STR_SIZE
+    jsr     write_to_window
+
+    lda     #<window_c4
+    sta     ZP_WINDOW_PTR_LO
+    lda     #>window_c4
+    sta     ZP_WINDOW_PTR_HI
+    jsr     create_window
+    lda     #<text_array
+    sta     ZP_PARAM_STR_PTR_LO
+    lda     #>text_array
+    sta     ZP_PARAM_STR_PTR_HI
+    lda     #end_text_array-text_array
+    sta     ZP_PARAM_STR_SIZE
+    jsr     write_to_window
+
+    lda     #<window_c5
+    sta     ZP_WINDOW_PTR_LO
+    lda     #>window_c5
+    sta     ZP_WINDOW_PTR_HI
+    jsr     create_window
+    lda     #<text_array
+    sta     ZP_PARAM_STR_PTR_LO
+    lda     #>text_array
+    sta     ZP_PARAM_STR_PTR_HI
+    lda     #end_text_array-text_array
+    sta     ZP_PARAM_STR_SIZE
+    jsr     write_to_window
+
+    lda     #<window_d0
+    sta     ZP_WINDOW_PTR_LO
+    lda     #>window_d0
+    sta     ZP_WINDOW_PTR_HI
+    jsr     create_window
+    lda     #<text_array
+    sta     ZP_PARAM_STR_PTR_LO
+    lda     #>text_array
+    sta     ZP_PARAM_STR_PTR_HI
+    lda     #end_text_array-text_array
+    sta     ZP_PARAM_STR_SIZE
+    jsr     write_to_window
+
+    lda     #<window_d1
+    sta     ZP_WINDOW_PTR_LO
+    lda     #>window_d1
+    sta     ZP_WINDOW_PTR_HI
+    jsr     create_window
+    lda     #<text_array
+    sta     ZP_PARAM_STR_PTR_LO
+    lda     #>text_array
+    sta     ZP_PARAM_STR_PTR_HI
+    lda     #end_text_array-text_array
+    sta     ZP_PARAM_STR_SIZE
+    jsr     write_to_window
+
+    lda     #<window_d2
+    sta     ZP_WINDOW_PTR_LO
+    lda     #>window_d2
+    sta     ZP_WINDOW_PTR_HI
+    jsr     create_window
+    lda     #<text_array
+    sta     ZP_PARAM_STR_PTR_LO
+    lda     #>text_array
+    sta     ZP_PARAM_STR_PTR_HI
+    lda     #end_text_array-text_array
+    sta     ZP_PARAM_STR_SIZE
+    jsr     write_to_window
+
+    lda     #<window_d3
+    sta     ZP_WINDOW_PTR_LO
+    lda     #>window_d3
+    sta     ZP_WINDOW_PTR_HI
+    jsr     create_window
+    lda     #<text_array
+    sta     ZP_PARAM_STR_PTR_LO
+    lda     #>text_array
+    sta     ZP_PARAM_STR_PTR_HI
+    lda     #end_text_array-text_array
+    sta     ZP_PARAM_STR_SIZE
+    jsr     write_to_window
+
+    lda     #<window_d4
+    sta     ZP_WINDOW_PTR_LO
+    lda     #>window_d4
+    sta     ZP_WINDOW_PTR_HI
+    jsr     create_window
+    lda     #<text_array
+    sta     ZP_PARAM_STR_PTR_LO
+    lda     #>text_array
+    sta     ZP_PARAM_STR_PTR_HI
+    lda     #end_text_array-text_array
+    sta     ZP_PARAM_STR_SIZE
+    jsr     write_to_window
+
+    lda     #<window_d5
+    sta     ZP_WINDOW_PTR_LO
+    lda     #>window_d5
+    sta     ZP_WINDOW_PTR_HI
+    jsr     create_window
+    lda     #<text_array
+    sta     ZP_PARAM_STR_PTR_LO
+    lda     #>text_array
+    sta     ZP_PARAM_STR_PTR_HI
+    lda     #end_text_array-text_array
+    sta     ZP_PARAM_STR_SIZE
+    jsr     write_to_window
+
+    lda     #<window_e
+    sta     ZP_WINDOW_PTR_LO
+    lda     #>window_e
     sta     ZP_WINDOW_PTR_HI
     jsr     create_window
     lda     #<text_array

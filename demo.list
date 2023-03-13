@@ -1,0 +1,2531 @@
+ca65 V2.18 - Ubuntu 2.19-1
+Main file   : demo.asm
+Current file: demo.asm
+
+000000r 1               ; File: demo.asm
+000000r 1               ; Purpose: Show a 106 character by 60 line display
+000000r 1               ; Copyright (c) 2023 by Curtis Whitley
+000000r 1               ;
+000000r 1               
+000000r 1               .org $080D
+00080D  1               .segment "STARTUP"
+00080D  1               .segment "INIT"
+00080D  1               .segment "ONCE"
+00080D  1               .segment "CODE"
+00080D  1               
+00080D  1  4C 85 10        jmp start      ; skip the data definitions, and go to code
+000810  1               
+000810  1               .include "x16.inc"
+000810  2               .ifndef X16_INC
+000810  2               X16_INC  = 1
+000810  2               
+000810  2               .ifndef __CX16__
+000810  2               __CX16__ = 1
+000810  2               .endif
+000810  2               
+000810  2               ; X16 addresses, values, and macros
+000810  2               ; Accurate for ROM release R38
+000810  2               
+000810  2               SD_DEVICE   = 8 ; also host file system on emulator if no SD image mounted
+000810  2               DISK_DEVICE = SD_DEVICE ; change if to be loaded off IEC device
+000810  2               
+000810  2               
+000810  2               ; RAM Addresses
+000810  2               
+000810  2               ; Kernal Registers
+000810  2               r0                = $02
+000810  2               r0L               = r0
+000810  2               r0H               = r0+1
+000810  2               r1                = $04
+000810  2               r1L               = r1
+000810  2               r1H               = r1+1
+000810  2               r2                = $06
+000810  2               r2L               = r2
+000810  2               r2H               = r2+1
+000810  2               r3                = $08
+000810  2               r3L               = r3
+000810  2               r3H               = r3+1
+000810  2               r4                = $0A
+000810  2               r4L               = r4
+000810  2               r4H               = r4+1
+000810  2               r5                = $0C
+000810  2               r5L               = r5
+000810  2               r5H               = r5+1
+000810  2               r6                = $0E
+000810  2               r6L               = r6
+000810  2               r6H               = r6+1
+000810  2               r7                = $10
+000810  2               r7L               = r7
+000810  2               r7H               = r7+1
+000810  2               r8                = $12
+000810  2               r8L               = r8
+000810  2               r8H               = r8+1
+000810  2               r9                = $14
+000810  2               r9L               = r9
+000810  2               r9H               = r9+1
+000810  2               r10               = $16
+000810  2               r10L              = r10
+000810  2               r10H              = r10+1
+000810  2               r11               = $18
+000810  2               r11L              = r11
+000810  2               r11H              = r11+1
+000810  2               r12               = $1A
+000810  2               r12L              = r12
+000810  2               r12H              = r12+1
+000810  2               r13               = $1C
+000810  2               r13L              = r13
+000810  2               r13H              = r13+1
+000810  2               r14               = $1E
+000810  2               r14L              = r14
+000810  2               r14H              = r14+1
+000810  2               r15               = $20
+000810  2               r15L              = r15
+000810  2               r15H              = r15+1
+000810  2               
+000810  2               ; I/O Registers
+000810  2               VERA_addr_low     = $9F20
+000810  2               VERA_addr_high    = $9F21
+000810  2               VERA_addr_bank    = $9F22
+000810  2               VERA_data0        = $9F23
+000810  2               VERA_data1        = $9F24
+000810  2               VERA_ctrl         = $9F25
+000810  2               VERA_ien          = $9F26
+000810  2               VERA_isr          = $9F27
+000810  2               VERA_irqline_l    = $9F28
+000810  2               VERA_dc_video     = $9F29 ; VERA_ctrl(1) (DCSEL) = 0
+000810  2               VERA_dc_hscale    = $9F2A ; VERA_ctrl(1) (DCSEL) = 0
+000810  2               VERA_dc_vscale    = $9F2B ; VERA_ctrl(1) (DCSEL) = 0
+000810  2               VERA_dc_border    = $9F2C ; VERA_ctrl(1) (DCSEL) = 0
+000810  2               VERA_dc_hstart    = $9F29 ; VERA_ctrl(1) (DCSEL) = 1
+000810  2               VERA_dc_hstop     = $9F2A ; VERA_ctrl(1) (DCSEL) = 1
+000810  2               VERA_dc_vsstart   = $9F2B ; VERA_ctrl(1) (DCSEL) = 1
+000810  2               VERA_dc_vstop     = $9F2C ; VERA_ctrl(1) (DCSEL) = 1
+000810  2               VERA_L0_config    = $9F2D
+000810  2               VERA_L0_mapbase   = $9F2E
+000810  2               VERA_L0_tilebase  = $9F2F
+000810  2               VERA_L0_hscroll_l = $9F30
+000810  2               VERA_L0_hscroll_h = $9F31
+000810  2               VERA_L0_vscroll_l = $9F32
+000810  2               VERA_L0_vscroll_h = $9F33
+000810  2               VERA_L1_config    = $9F34
+000810  2               VERA_L1_mapbase   = $9F35
+000810  2               VERA_L1_tilebase  = $9F36
+000810  2               VERA_L1_hscroll_l = $9F37
+000810  2               VERA_L1_hscroll_h = $9F38
+000810  2               VERA_L1_vscroll_l = $9F39
+000810  2               VERA_L1_vscroll_h = $9F3A
+000810  2               VERA_audio_ctrl   = $9F3B
+000810  2               VERA_audio_rate   = $9F3C
+000810  2               VERA_audio_data   = $9F3D
+000810  2               VERA_spi_data     = $9F3E
+000810  2               VERA_spi_ctrl     = $9F3F
+000810  2               
+000810  2               ROM_BANK          = $9F60
+000810  2               RAM_BANK          = $9F61
+000810  2               
+000810  2               YM_reg            = $9FE0
+000810  2               YM_data           = $9FE1
+000810  2               
+000810  2               ; VERA Registers values
+000810  2               VSYNC_BIT         = $01
+000810  2               SPRCOL_BIT        = $04
+000810  2               DISPLAY_SCALE     = $80 ; 1X zoom
+000810  2               ADDRSEL           = $01
+000810  2               DCSEL             = $02
+000810  2               
+000810  2               ENABLE_CURRENT_FIELD    = $80
+000810  2               ENABLE_SPRITES          = $40
+000810  2               ENABLE_LAYER_1          = $20
+000810  2               ENABLE_LAYER_0          = $10
+000810  2               
+000810  2               OUTPUT_MODE_DISABLED    = $00
+000810  2               OUTPUT_MODE_VGA         = $01
+000810  2               OUTPUT_MODE_NTSC        = $02
+000810  2               OUTPUT_MODE_RGBI        = $03
+000810  2               
+000810  2               SPRITE_MODE_4_BPP = $00
+000810  2               SPRITE_MODE_8_BPP = $80
+000810  2               
+000810  2               SPRITE_COLL_MASK_NONE   =   $00
+000810  2               SPRITE_COLL_MASK_0      =   $10
+000810  2               SPRITE_COLL_MASK_1      =   $20
+000810  2               SPRITE_COLL_MASK_2      =   $40
+000810  2               SPRITE_COLL_MASK_3      =   $80
+000810  2               
+000810  2               SPRITE_ZDEPTH_DISABLED  =   $00
+000810  2               SPRITE_ZDEPTH_ABOVE_BG  =   $04
+000810  2               SPRITE_ZDEPTH_ABOVE_L0  =   $08
+000810  2               SPRITE_ZDEPTH_ABOVE_L1  =   $0C
+000810  2               
+000810  2               SPRITE_V_FLIP           =   $02
+000810  2               SPRITE_H_FLIP           =   $01
+000810  2               
+000810  2               SPRITE_HEIGHT_08_PIXELS =   $00
+000810  2               SPRITE_HEIGHT_16_PIXELS =   $40
+000810  2               SPRITE_HEIGHT_32_PIXELS =   $80
+000810  2               SPRITE_HEIGHT_64_PIXELS =   $C0
+000810  2               
+000810  2               SPRITE_WIDTH_08_PIXELS  =   $00
+000810  2               SPRITE_WIDTH_16_PIXELS  =   $10
+000810  2               SPRITE_WIDTH_32_PIXELS  =   $20
+000810  2               SPRITE_WIDTH_64_PIXELS  =   $30
+000810  2               
+000810  2               ; Sprite data structure
+000810  2               SPRITE_ADDR_LO  =   0       ; Address(12:5)@(7:0)
+000810  2               SPRITE_ADDR_HI  =   1       ; Mode@(7), Address(16:3)@(3:0)
+000810  2               SPRITE_X_LO     =   2       ; X(7:0)
+000810  2               SPRITE_X_HI     =   3       ; X(9:8)@(1:0)
+000810  2               SPRITE_Y_LO     =   4       ; Y(7:0)
+000810  2               SPRITE_Y_HI     =   5       ; Y(9:8)@(1:0)
+000810  2               SPRITE_CTRL     =   6       ; Collision mask@(7:4), Z-depth@(3:2), V-flip@(1), H-flip@(0)
+000810  2               SPRITE_HEIGHT   =   7       ; Height(7:6), Width@(5:4), Palette offset@(3:0)
+000810  2               SPRITE_ATTR_SIZE =  8
+000810  2               
+000810  2               ; Tile related definitions
+000810  2               TILE_MAP_WIDTH_032  = $00   ; 32 tiles across
+000810  2               TILE_MAP_WIDTH_064  = $10   ; 64 tiles across
+000810  2               TILE_MAP_WIDTH_128  = $20   ; 128 tiles across
+000810  2               TILE_MAP_WIDTH_256  = $30   ; 256 tiles across
+000810  2               TILE_MAP_HEIGHT_032 = $00   ; 32 tiles down
+000810  2               TILE_MAP_HEIGHT_064 = $40   ; 64 tiles down
+000810  2               TILE_MAP_HEIGHT_128 = $80   ; 128 tiles down
+000810  2               TILE_MAP_HEIGHT_256 = $C0   ; 256 tiles down
+000810  2               
+000810  2               TILE_WIDTH_08_PIXELS = $00  ; 8 pixels wide
+000810  2               TILE_WIDTH_16_PIXELS = $01  ; 16 pixels wide
+000810  2               TILE_HEIGHT_08_PIXELS = $00 ; 8 pixels high
+000810  2               TILE_HEIGHT_16_PIXELS = $02 ; 16 pixels high
+000810  2               
+000810  2               BITMAP_MODE          = $04  ; layer bitmap mode
+000810  2               TILE_MODE            = $00  ; layer tile mode
+000810  2               
+000810  2               LAYER_COLOR_DEPTH_1_BPP = $00 ; 1 bit per pixel (2 colors)
+000810  2               LAYER_COLOR_DEPTH_2_BPP = $01 ; 2 bits per pixel (4 colors)
+000810  2               LAYER_COLOR_DEPTH_4_BPP = $02 ; 4 bits per pixel (16 colors)
+000810  2               LAYER_COLOR_DEPTH_8_BPP = $03 ; 8 bits per pixel (256 colors)
+000810  2               
+000810  2               ; Emulator Registers
+000810  2               GIF_ctrl          = $9FB5
+000810  2               
+000810  2               ; ROM Banks
+000810  2               KERNAL_ROM_BANK   = 0
+000810  2               KEYBOARD_ROM_BANK = 1
+000810  2               CBDOS_ROM_BANK    = 2
+000810  2               GEOS_ROM_BANK     = 3
+000810  2               BASIC_ROM_BANK    = 4
+000810  2               MONITOR_ROM_BANK  = 5
+000810  2               CHARSET_ROM_BANK  = 6
+000810  2               
+000810  2               ; Banked Addresses
+000810  2               RAM_WIN           = $A000
+000810  2               RAM_WIN_SIZE      = $2000
+000810  2               ROM_WIN           = $C000
+000810  2               
+000810  2               ; Kernal Subroutines
+000810  2               ENTROPY_GET                   := $FECF
+000810  2               CONSOLE_set_paging_message    := $FED5
+000810  2               CONSOLE_put_image             := $FED8
+000810  2               CONSOLE_init                  := $FEDB
+000810  2               CONSOLE_put_char              := $FEDE
+000810  2               CONSOLE_get_char              := $FEE1
+000810  2               MEMORY_FILL                   := $FEE4
+000810  2               MEMORY_COPY                   := $FEE7
+000810  2               MEMORY_CRC                    := $FEEA
+000810  2               MEMORY_DECOMPRESS             := $FEED
+000810  2               SPRITE_set_image              := $FEF0
+000810  2               SPRITE_set_position           := $FEF3
+000810  2               FB_init                       := $FEF6
+000810  2               FB_get_info                   := $FEF9
+000810  2               FB_set_palette                := $FEFC
+000810  2               FB_cursor_position            := $FEFF
+000810  2               FB_cursor_next_line           := $FF02
+000810  2               FB_get_pixel                  := $FF05
+000810  2               FB_get_pixels                 := $FF08
+000810  2               FB_set_pixel                  := $FF0B
+000810  2               FB_set_pixels                 := $FF0E
+000810  2               FB_set_8_pixels               := $FF11
+000810  2               FB_set_8_pixels_opaque        := $FF14
+000810  2               FB_fill_pixels                := $FF17
+000810  2               FB_filter_pixels              := $FF1A
+000810  2               FB_move_pixels                := $FF1D
+000810  2               GRAPH_init                    := $FF20
+000810  2               GRAPH_clear                   := $FF23
+000810  2               GRAPH_set_window              := $FF26
+000810  2               GRAPH_set_colors              := $FF29
+000810  2               GRAPH_draw_line               := $FF2C
+000810  2               GRAPH_draw_rect               := $FF2F
+000810  2               GRAPH_move_rect               := $FF32
+000810  2               GRAPH_draw_oval               := $FF35
+000810  2               GRAPH_draw_image              := $FF38
+000810  2               GRAPH_set_font                := $FF3B
+000810  2               GRAPH_get_char_size           := $FF3E
+000810  2               GRAPH_put_char                := $FF41
+000810  2               MONITOR                       := $FF44
+000810  2               ENTER_BASIC                   := $FF47
+000810  2               CLOSE_ALL                     := $FF4A
+000810  2               CLOCK_SET_DATE_TIME           := $FF4D
+000810  2               CLOCK_GET_DATE_TIME           := $FF50
+000810  2               JOYSTICK_SCAN                 := $FF53
+000810  2               JOYSTICK_GET                  := $FF56
+000810  2               SCREEN_SET_MODE               := $FF5F
+000810  2               SCREEN_SET_CHARSET            := $FF62
+000810  2               PFKEY                         := $FF65
+000810  2               MOUSE_CONFIG                  := $FF68
+000810  2               MOUSE_GET                     := $FF6B
+000810  2               JSRFAR_kernal_addr            := $FF6E
+000810  2               MOUSE_SCAN                    := $FF71
+000810  2               FETCH                         := $FF74
+000810  2               STASH                         := $FF77
+000810  2               CMPARE                        := $FF7A
+000810  2               PRIMM                         := $FF7D
+000810  2               
+000810  2               SCINIT                        := $FF81
+000810  2               IOINIT                        := $FF84
+000810  2               RAMTAS                        := $FF87
+000810  2               RESTOR                        := $FF8A
+000810  2               LKUPLA                        := $FF8D
+000810  2               SETMSG                        := $FF90
+000810  2               SECOND                        := $FF93
+000810  2               TKSA                          := $FF96
+000810  2               MEMTOP                        := $FF99
+000810  2               MEMBOT                        := $FF9C
+000810  2               SETTMO                        := $FFA2
+000810  2               IECIN                         := $FFA5
+000810  2               IECOUT                        := $FFA8
+000810  2               UNTALK                        := $FFAB
+000810  2               UNLISTEN                      := $FFAE
+000810  2               LISTEN                        := $FFB1
+000810  2               TALK                          := $FFB4
+000810  2               READST                        := $FFB7
+000810  2               SETLFS                        := $FFBA
+000810  2               SETNAM                        := $FFBD
+000810  2               OPEN                          := $FFC0
+000810  2               CLOSE                         := $FFC3
+000810  2               CHKIN                         := $FFC6
+000810  2               CHKOUT                        := $FFC9
+000810  2               CLRCHN                        := $FFCC
+000810  2               CHRIN                         := $FFCF
+000810  2               BASIN                         := CHRIN ; alias
+000810  2               CHROUT                        := $FFD2
+000810  2               BSOUT                         := CHROUT ; alias
+000810  2               LOAD                          := $FFD5
+000810  2               SAVE                          := $FFD8
+000810  2               SETTIM                        := $FFDB
+000810  2               RDTIM                         := $FFDE
+000810  2               STOP                          := $FFE1
+000810  2               GETIN                         := $FFE4
+000810  2               CLALL                         := $FFE7
+000810  2               UDTIM                         := $FFEA
+000810  2               SCREEN                        := $FFED
+000810  2               PLOT                          := $FFF0
+000810  2               IOBASE                        := $FFF3
+000810  2               
+000810  2               ; BASIC Vectors
+000810  2               BASIC_PANIC       := $C000
+000810  2               BASIC_INIT        := $C003
+000810  2               
+000810  2               
+000810  2               ; VRAM Addresses
+000810  2               VRAM_petscii   = $0F800
+000810  2               VRAM_psg       = $1F9C0
+000810  2               VRAM_palette   = $1FA00
+000810  2               VRAM_sprattr   = $1FC00
+000810  2               
+000810  2               ; RAM Vectors
+000810  2               IRQVec         = $0314
+000810  2               BRKVec         = $0316
+000810  2               NMIVec         = $0318
+000810  2               FETVec         = $03AF
+000810  2               ;STAVec         = TBD
+000810  2               ;CMPVec         = TBD
+000810  2               
+000810  2               
+000810  2               ;   Macros
+000810  2               
+000810  2               .macro JSRFAR far_sr_addr, bank
+000810  2               	jsr JSRFAR_kernal_addr
+000810  2               	.addr far_sr_addr
+000810  2               	.byte bank
+000810  2               .endmacro
+000810  2               
+000810  2               .endif
+000810  2               
+000810  2               ; set data port 0 to start writing to VRAM address
+000810  2               ; the address is a constant
+000810  2               .macro VERA_SET_ADDR0 vram_addr, stride
+000810  2                   .scope
+000810  2                       .ifnblank stride
+000810  2                           lda #((^vram_addr) | (stride << 4))
+000810  2                       .else
+000810  2                           lda #((^vram_addr) | $10)
+000810  2                       .endif
+000810  2               
+000810  2                       stz VERA_ctrl
+000810  2                       sta VERA_addr_bank
+000810  2                       lda #>vram_addr
+000810  2                       sta VERA_addr_high
+000810  2                       lda #<vram_addr
+000810  2                       sta VERA_addr_low
+000810  2                   .endscope
+000810  2               .endmacro
+000810  2               
+000810  2               ; set data port 1 to start writing to VRAM address
+000810  2               ; the address is a constant
+000810  2               .macro VERA_SET_ADDR1 vram_addr, stride
+000810  2                   .scope
+000810  2                       lda #ADDRSEL
+000810  2                       sta VERA_ctrl
+000810  2               
+000810  2                       .ifnblank stride
+000810  2                           lda #((^vram_addr) | (stride << 4))
+000810  2                       .else
+000810  2                           lda #((^vram_addr) | $10)
+000810  2                       .endif
+000810  2               
+000810  2                       sta VERA_addr_bank
+000810  2                       lda #>vram_addr
+000810  2                       sta VERA_addr_high
+000810  2                       lda #<vram_addr
+000810  2                       sta VERA_addr_low
+000810  2                   .endscope
+000810  2               .endmacro
+000810  2               
+000810  2               ; set data port 0 to start writing to VRAM address
+000810  2               ; the address is in X (LO), Y (HI), and A (BANK)
+000810  2               .macro VERA_SET_ADDR0_XYA stride
+000810  2                   .scope
+000810  2                       .ifnblank stride
+000810  2                           ora #(stride << 4)
+000810  2                       .else
+000810  2                           ora #($10)
+000810  2                       .endif
+000810  2               
+000810  2                       stz VERA_ctrl
+000810  2                       sta VERA_addr_bank
+000810  2                       sty VERA_addr_high
+000810  2                       stx VERA_addr_low
+000810  2                   .endscope
+000810  2               .endmacro
+000810  2               
+000810  2               ; set data port 1 to start writing to VRAM address
+000810  2               ; the address is in X (LO), Y (HI), and A (BANK)
+000810  2               .macro VERA_SET_ADDR1_XYA stride
+000810  2                   .scope
+000810  2                       pha
+000810  2                       lda #ADDRSEL
+000810  2                       sta VERA_ctrl
+000810  2                       pla
+000810  2               
+000810  2                       .ifnblank stride
+000810  2                           ora #(stride << 4)
+000810  2                       .else
+000810  2                           ora #($10)
+000810  2                       .endif
+000810  2               
+000810  2                       sta VERA_addr_bank
+000810  2                       sty VERA_addr_high
+000810  2                       stx VERA_addr_low
+000810  2                   .endscope
+000810  2               .endmacro
+000810  2               
+000810  2               .macro RAM2VRAM ram_addr, vram_addr, num_bytes
+000810  2                  .scope
+000810  2                     ; set data port 0 to start writing to VRAM address
+000810  2                     stz VERA_ctrl
+000810  2                     lda #($10 | ^vram_addr) ; stride = 1
+000810  2                     sta VERA_addr_bank
+000810  2                     lda #>vram_addr
+000810  2                     sta VERA_addr_high
+000810  2                     lda #<vram_addr
+000810  2                     sta VERA_addr_low
+000810  2                      ; ZP pointer = start of video data in CPU RAM
+000810  2                     lda #<ram_addr
+000810  2                     sta ZP_PTR_LO
+000810  2                     lda #>ram_addr
+000810  2                     sta ZP_PTR_HI
+000810  2                     ; use index pointers to compare with number of bytes to copy
+000810  2                     ldx #0
+000810  2                     ldy #0
+000810  2                  vram_loop:
+000810  2                     lda (ZP_PTR),y
+000810  2                     sta VERA_data0
+000810  2                     iny
+000810  2                     cpx #>num_bytes ; last page yet?
+000810  2                     beq check_end
+000810  2                     cpy #0
+000810  2                     bne vram_loop ; not on last page, Y non-zero
+000810  2                     inx ; next page
+000810  2                     inc ZP_PTR_HI
+000810  2                     bra vram_loop
+000810  2                  check_end:
+000810  2                     cpy #<num_bytes ; last byte of last page?
+000810  2                     bne vram_loop ; last page, before last byte
+000810  2                  .endscope
+000810  2               .endmacro
+000810  2               
+000810  2               .macro FILLVRAM value, vram_addr, num_bytes
+000810  2                  .scope
+000810  2                     ; set data port 0 to start writing to VRAM address
+000810  2                     stz VERA_ctrl
+000810  2                     lda #($10 | ^vram_addr) ; stride = 1
+000810  2                     sta VERA_addr_bank
+000810  2                     lda #>vram_addr
+000810  2                     sta VERA_addr_high
+000810  2                     lda #<vram_addr
+000810  2                     sta VERA_addr_low
+000810  2                     ; use index pointers to compare with number of bytes to copy
+000810  2                     ldx #0
+000810  2                     ldy #0
+000810  2                  vram_loop:
+000810  2                     lda #value
+000810  2                     sta VERA_data0
+000810  2                     iny
+000810  2                     cpx #>num_bytes ; last page yet?
+000810  2                     beq check_end
+000810  2                     cpy #0
+000810  2                     bne vram_loop ; not on last page, Y non-zero
+000810  2                     inx ; next page
+000810  2                     inc ZP_PTR_HI
+000810  2                     bra vram_loop
+000810  2                  check_end:
+000810  2                     cpy #<num_bytes ; last byte of last page?
+000810  2                     bne vram_loop ; last page, before last byte
+000810  2                  .endscope
+000810  2               .endmacro
+000810  2               
+000810  1               .include "zeropage.inc"
+000810  2               
+000810  2               ; File: zeropage.inc
+000810  2               ; Purpose: Zero Page custom variables
+000810  2               ; Copyright (c) 2023 by Curtis Whitley
+000810  2               ;
+000810  2               
+000810  2               ZP_STYLE_PTR        = $22   ; border style pointer
+000810  2               ZP_STYLE_PTR_LO     = $22
+000810  2               ZP_STYLE_PTR_HI     = $23
+000810  2               
+000810  2               ZP_WINDOW_PTR       = $24   ; points to window parameters
+000810  2               ZP_WINDOW_PTR_LO    = $24
+000810  2               ZP_WINDOW_PTR_HI    = $25
+000810  2               
+000810  2               ZP_WINDOW_CUR_ROW   = $26   ; current row within a window
+000810  2               ZP_WINDOW_CUR_COL   = $27   ; current column within a window
+000810  2               ZP_WINDOW_FIRST_ROW = $28   ; top-most writeable row within a window
+000810  2               ZP_WINDOW_FIRST_COL = $29   ; left-most writeable column within a window
+000810  2               ZP_WINDOW_LAST_ROW  = $2A   ; bottom-most writeable row within a window
+000810  2               ZP_WINDOW_LAST_COL  = $2B   ; right-most writeable column within a window
+000810  2               ZP_WINDOW_END_ROW   = $2C   ; bottom border row of a window
+000810  2               ZP_WINDOW_END_COL   = $2D   ; right border column of a window
+000810  2               ZP_WINDOW_CNT_NOW   = $2E   ; number of characters being written, or rows scrolled, right now
+000810  2               ZP_WINDOW_CNT_REM   = $2F   ; number of characters still remaining to write
+000810  2               
+000810  2               ZP_PTR              = $30   ; temporary pointer
+000810  2               ZP_PTR_LO           = $30
+000810  2               ZP_PTR_HI           = $31
+000810  2               
+000810  2               ZP_TEMP_INDEX       = $32   ; temporary index for calculations
+000810  2               ZP_TEMP_INDEX_LO    = $32   ; temporary index for calculations (LO)
+000810  2               ZP_TEMP_INDEX_HI    = $33   ; temporary index for calculations (HI)
+000810  2               
+000810  2               ZP_CHAR_ATTR        = $34   ; palette offset, v-flip, h-flip
+000810  2               ZP_TEMP_COL         = $35   ; current column for computations
+000810  2               
+000810  2               ZP_BORDER_FILL      = $37   ; border param: if not equal to $FF, fills the box with its value
+000810  2               ZP_BORDER_ROW       = $38   ; border param: character row (line) index
+000810  2               ZP_BORDER_COL       = $39   ; border param: character column index
+000810  2               ZP_BORDER_CNT       = $3A   ; border param: number of characters to show
+000810  2               ZP_BORDER_GROUP     = $3B   ; border param: which character tile group (0 or 1)
+000810  2               ZP_BORDER_PALETTE   = $3C   ; border param: color palette offset (0..15)
+000810  2               ZP_BORDER_STYLE     = $3D   ; border param: border style number
+000810  2               ZP_BORDER_WIDTH     = $3E   ; border param: width of box, including border
+000810  2               ZP_BORDER_HEIGHT    = $3F   ; border param: height of box, including border
+000810  2               
+000810  2               ZP_PARAM_ROW        = $40   ; character row (line) index
+000810  2               ZP_PARAM_COL        = $41   ; character column index
+000810  2               ZP_PARAM_CNT        = $42   ; number of characters to show
+000810  2               ZP_PARAM_GROUP      = $43   ; which character tile group (0 or 1)
+000810  2               ZP_PARAM_CODE       = $44   ; Character index code value (not an ASCII code)
+000810  2               ZP_PARAM_PALETTE    = $45   ; color palette offset (0..15)
+000810  2               
+000810  2               ZP_PARAM_STR_PTR    = $46   ; points to a string of character index codes (not ASCII codes)
+000810  2               ZP_PARAM_STR_PTR_LO = $46
+000810  2               ZP_PARAM_STR_PTR_HI = $47
+000810  2               ZP_PARAM_STR_SIZE   = $48   ; size (length) of the string pointed to by ZP_PARAM_STR_PTR
+000810  2               ZP_PARAM_CASE_NUM   = $49   ; case for how tile map is accessed (0..3)
+000810  2               
+000810  2               ZP_TILE_INDEX_0     = $50   ; tile index (LO) for 0 pixel offset image
+000810  2               ZP_TILE_ATTR_0      = $51   ; tile attributes for 0 pixel offset image
+000810  2               ZP_TILE_INDEX_4A    = $52   ; tile index (LO) for 4 pixel offset image (part A)
+000810  2               ZP_TILE_ATTR_4A     = $53   ; tile attributes for 4 pixel offset image (part A)
+000810  2               ZP_TILE_INDEX_4B    = $54   ; tile index (LO) for 4 pixel offset image (part B)
+000810  2               ZP_TILE_ATTR_4B     = $55   ; tile attributes for 4 pixel offset image (part B)
+000810  2               
+000810  2               ZP_TILE_ADDR_0_LO   = $60   ; used for debugging
+000810  2               ZP_TILE_ADDR_0_HI   = $61   ; used for debugging
+000810  2               ZP_TILE_ADDR_1_LO   = $62   ; used for debugging
+000810  2               ZP_TILE_ADDR_1_HI   = $63   ; used for debugging
+000810  2               
+000810  1               .include "text.inc"
+000810  2               ; File: text.inc
+000810  2               ; Purpose: Display text on the screen
+000810  2               ; Copyright (c) 2023 by Curtis Whitley
+000810  2               ;
+000810  2               ; This code shows 5x7 pixel characters in 6x8 pixel cells.
+000810  2               ; Because each character position is 6 pixels wide, which
+000810  2               ; is not a standard tile width, we use both VERA layers,
+000810  2               ; with L0 and L1 offset in the X direction by 2 pixels.
+000810  2               ; Also, because a character postion may start on any even
+000810  2               ; pixel boundary (relative to its VERA layer), there are
+000810  2               ; 2 separate sets of tiles. One set of tiles has character
+000810  2               ; data with a 0-pixel offset from the tile position. The
+000810  2               ; other set of tiles has character data with a 4-pixel offset
+000810  2               ; from the tile position. The 2 tile sets are combined
+000810  2               ; into a single, long set of tiles for loading and usage in
+000810  2               ; the VERA, so there is only 1 tile map involved.
+000810  2               ;
+000810  2               ; Here is an illustration of how adjacent 6-pixel wide
+000810  2               ; character cells are populated, where:
+000810  2               ;
+000810  2               ; SCC = screen character column index
+000810  2               ; SPX = screen pixel X coordinate
+000810  2               ; SPD = screen pixels desired for viewing
+000810  2               ; C00 = column index in layer 0 (0..105), for pixel offset 0 bits
+000810  2               ; C04 = column index in layer 0 (0..105), for pixel offset 4 bits
+000810  2               ; C10 = column index in layer 1 (0..211), for pixel offset 0 bits
+000810  2               ; C14 = column index in layer 4 (0..211), for pixel offset 4 bits
+000810  2               ; L0X = layer 0 pixel X coordinate (ignoring the layer being shifted)
+000810  2               ; L1X = layer 1 pixel X coordinate (ignoring the layer being shifted)
+000810  2               ; L0P = layer 0 pixels displayed
+000810  2               ; L1P = layer 1 pixels displayed
+000810  2               ; xxxxxx = one row within 6x8-pixel character cell (aaaaaa, bbbbbb, etc.)
+000810  2               ; '+' = purposeful transparent leading pixels
+000810  2               ; '-' = purposeful transparent trailing pixels
+000810  2               ;
+000810  2               ; SCC 0.....1.....2.....3.....4.....5.....
+000810  2               ; SPX 0000000000111111111122222222223333333333
+000810  2               ; SPX 0123456789012345678901234567890123456789
+000810  2               ; SPD aaaaaabbbbbbccccccddddddeeeeeeffffff
+000810  2               ;
+000810  2               ; C00 0=======                3=======
+000810  2               ; C04         1=======2=======
+000810  2               ; L0X 0123456701234567012345670123456701234567
+000810  2               ; L0P aaaaaa--++++cccccc------eeeeee--
+000810  2               ; L1P   ++++bbbbbb------dddddd--++++ffffff------
+000810  2               ; L1X   0123456701234567012345670123456701234567
+000810  2               ; C10                   2=======
+000810  2               ; C14   0=======1=======        3=======
+000810  2               ;
+000810  2               
+000810  2               TEXT_MAP_TILES_ACROSS       = 128
+000810  2               TEXT_MAP_TILES_DOWN         = 64
+000810  2               TEXT_SCREEN_TILES_ACROSS    = 106
+000810  2               TEXT_SCREEN_TILES_DOWN      = 60
+000810  2               
+000810  2               TEXT_L0_MAP_BASE_ADDRESS    = $00000
+000810  2               TEXT_L1_MAP_BASE_ADDRESS    = $04000
+000810  2               TEXT_TILE_DATA_ADDRESS      = $08000
+000810  2               
+000810  2               TEXT_TILE_DATA_ADDRESS_SHIFTED   = (TEXT_TILE_DATA_ADDRESS>>(11-2))
+000810  2               TEXT_L0_MAP_BASE_ADDRESS_SHIFTED = (TEXT_L0_MAP_BASE_ADDRESS>>9)
+000810  2               TEXT_L1_MAP_BASE_ADDRESS_SHIFTED = (TEXT_L1_MAP_BASE_ADDRESS>>9)
+000810  2               
+000810  2               ; Values that are absolute (not relative to start of tile group)
+000810  2               
+000810  2               TILE_GROUP_A_NUM_CHARS              = 169
+000810  2               TILE_GROUP_A_OFFSET_0_INDEX_START   = 0
+000810  2               TILE_GROUP_A_OFFSET_4_INDEX_START   = (TILE_GROUP_A_OFFSET_0_INDEX_START+TILE_GROUP_A_NUM_CHARS)
+000810  2               TILE_GROUP_A_TOTAL_TILES            = (TILE_GROUP_A_NUM_CHARS*3)
+000810  2               
+000810  2               TILE_GROUP_B_NUM_CHARS              = 169
+000810  2               TILE_GROUP_B_OFFSET_0_INDEX_START   = TILE_GROUP_A_TOTAL_TILES
+000810  2               TILE_GROUP_B_OFFSET_4_INDEX_START   = (TILE_GROUP_B_OFFSET_0_INDEX_START+TILE_GROUP_B_NUM_CHARS)
+000810  2               TILE_GROUP_B_TOTAL_TILES            = (TILE_GROUP_B_NUM_CHARS*3)
+000810  2               
+000810  2               ; Tile indexes relative to start of tile group
+000810  2               
+000810  2               TILE_GROUP_A_OFFSET_0_INDEX_BLANK   = 0
+000810  2               TILE_GROUP_A_OFFSET_0_INDEX_EMPTY   = 95
+000810  2               TILE_GROUP_A_OFFSET_4_INDEX_BLANK   = TILE_GROUP_A_NUM_CHARS
+000810  2               TILE_GROUP_A_OFFSET_4_INDEX_EMPTY   = (TILE_GROUP_A_OFFSET_4_INDEX_BLANK+TILE_GROUP_A_OFFSET_0_INDEX_EMPTY*2)
+000810  2               
+000810  2               TILE_GROUP_B_OFFSET_0_INDEX_BLANK   = 0
+000810  2               TILE_GROUP_B_OFFSET_0_INDEX_EMPTY   = 95
+000810  2               TILE_GROUP_B_OFFSET_4_INDEX_BLANK   = TILE_GROUP_B_NUM_CHARS
+000810  2               TILE_GROUP_B_OFFSET_4_INDEX_EMPTY   = (TILE_GROUP_B_OFFSET_4_INDEX_BLANK+TILE_GROUP_B_OFFSET_0_INDEX_EMPTY*2)
+000810  2               
+000810  2               ; Structure to hold above constants, per tile group
+000810  2               
+000810  2                   .struct TileGroupLimits
+000810  2                       num_chars                   .word
+000810  2                       offset_0_index_start        .word
+000810  2                       offset_4_index_start        .word
+000810  2                       total_tiles                 .word
+000810  2                       offset_0_index_blank        .word
+000810  2                       offset_0_index_empty        .word
+000810  2                       offset_4_index_blank        .word
+000810  2                       offset_4_index_empty        .word
+000810  2                   .endstruct
+000810  2               
+000810  2               tile_group_limits:
+000810  2               
+000810  2               tile_group_a:   ; TileGroupLimits
+000810  2  A9 00            .word   TILE_GROUP_A_NUM_CHARS
+000812  2  00 00            .word   TILE_GROUP_A_OFFSET_0_INDEX_START
+000814  2  A9 00            .word   TILE_GROUP_A_OFFSET_4_INDEX_START
+000816  2  FB 01            .word   TILE_GROUP_A_TOTAL_TILES
+000818  2  00 00            .word   TILE_GROUP_A_OFFSET_0_INDEX_BLANK
+00081A  2  5F 00            .word   TILE_GROUP_A_OFFSET_0_INDEX_EMPTY
+00081C  2  A9 00            .word   TILE_GROUP_A_OFFSET_4_INDEX_BLANK
+00081E  2  67 01            .word   TILE_GROUP_A_OFFSET_4_INDEX_EMPTY
+000820  2               
+000820  2               tile_group_b:   ; TileGroupLimits
+000820  2  A9 00            .word   TILE_GROUP_B_NUM_CHARS
+000822  2  FB 01            .word   TILE_GROUP_B_OFFSET_0_INDEX_START
+000824  2  A4 02            .word   TILE_GROUP_B_OFFSET_4_INDEX_START
+000826  2  FB 01            .word   TILE_GROUP_B_TOTAL_TILES
+000828  2  00 00            .word   TILE_GROUP_B_OFFSET_0_INDEX_BLANK
+00082A  2  5F 00            .word   TILE_GROUP_B_OFFSET_0_INDEX_EMPTY
+00082C  2  A9 00            .word   TILE_GROUP_B_OFFSET_4_INDEX_BLANK
+00082E  2  67 01            .word   TILE_GROUP_B_OFFSET_4_INDEX_EMPTY
+000830  2               
+000830  2               ;-------------------------------------------------------------------
+000830  2               ; Load text character pixel data and palette
+000830  2               ;-------------------------------------------------------------------
+000830  2               
+000830  2  54 49 4C 45  text:   .byte   "tilegrps.bin"
+000834  2  47 52 50 53  
+000838  2  2E 42 49 4E  
+00083C  2               end_text:
+00083C  2  50 41 4C 45  palette: .byte   "palette.bin"
+000840  2  54 54 45 2E  
+000844  2  42 49 4E     
+000847  2               end_palette:
+000847  2               
+000847  2               load_text_data:
+000847  2  A9 01            lda	#1          ; Logical file number
+000849  2  A2 08        	ldx	#SD_DEVICE  ; Device 8 = sd card
+00084B  2  A0 00        	ldy	#0          ; 0=ignore address in bin file (2 first bytes)
+00084D  2  20 BA FF     	jsr	SETLFS
+000850  2               
+000850  2  A9 0C        	lda	#(end_text-text) ; Length of filename
+000852  2  A2 30        	ldx	#<text	    ; Low byte of filename address
+000854  2  A0 08        	ldy	#>text	    ; High byte of filename address
+000856  2  20 BD FF     	jsr	SETNAM
+000859  2               
+000859  2  A0 80        	ldy	#>TEXT_TILE_DATA_ADDRESS ; VERA HIGH address
+00085B  2  A2 00        	ldx	#<TEXT_TILE_DATA_ADDRESS ; VERA LOW address
+00085D  2  A9 02        	lda	#0+2        ; VERA BANK + 2
+00085F  2  20 D5 FF     	jsr	LOAD        ; Load binary file into VRAM, ignoring 2 first bytes
+000862  2  60               rts
+000863  2               
+000863  2               load_palette:
+000863  2  A9 01            lda	#1          ; Logical file number
+000865  2  A2 08        	ldx	#SD_DEVICE  ; Device 8 = sd card
+000867  2  A0 00        	ldy	#0          ; 0=ignore address in bin file (2 first bytes)
+000869  2  20 BA FF     	jsr	SETLFS
+00086C  2               
+00086C  2  A9 0B        	lda	#(end_palette-palette) ; Length of filename
+00086E  2  A2 3C        	ldx	#<palette   ; Low byte of filename address
+000870  2  A0 08        	ldy	#>palette   ; High byte of filename address
+000872  2  20 BD FF     	jsr	SETNAM
+000875  2               
+000875  2  A0 FA        	ldy	#>VRAM_palette ; VERA HIGH address
+000877  2  A2 00        	ldx	#<VRAM_palette ; VERA LOW address
+000879  2  A9 03        	lda	#1+2        ; VERA BANK + 2
+00087B  2  20 D5 FF     	jsr	LOAD        ; Load binary file into VRAM, ignoring 2 first bytes
+00087E  2  60               rts
+00087F  2               
+00087F  2               ;-------------------------------------------------------------------
+00087F  2               ; Initialize layer tile information.
+00087F  2               ;-------------------------------------------------------------------
+00087F  2               
+00087F  2               init_text_tile_information:
+00087F  2                   ; set the various VERA registers needed
+00087F  2               
+00087F  2                   ; setup layer 0 for text
+00087F  2  A9 61            lda     #TILE_MAP_HEIGHT_064|TILE_MAP_WIDTH_128|TILE_MODE|LAYER_COLOR_DEPTH_2_BPP
+000881  2  8D 2D 9F         sta     VERA_L0_config
+000884  2  A9 00            lda     #TEXT_L0_MAP_BASE_ADDRESS_SHIFTED
+000886  2  8D 2E 9F         sta     VERA_L0_mapbase
+000889  2  A9 40            lda     #TEXT_TILE_DATA_ADDRESS_SHIFTED|TILE_HEIGHT_08_PIXELS|TILE_WIDTH_08_PIXELS
+00088B  2  8D 2F 9F         sta     VERA_L0_tilebase
+00088E  2  A9 06            lda     #6
+000890  2  8D 30 9F         sta     VERA_L0_hscroll_l
+000893  2  9C 31 9F         stz     VERA_L0_hscroll_h
+000896  2  9C 32 9F         stz     VERA_L0_vscroll_l
+000899  2  9C 33 9F         stz     VERA_L0_vscroll_h
+00089C  2               
+00089C  2                   ; setup layer 1 for text
+00089C  2  A9 61            lda     #TILE_MAP_HEIGHT_064|TILE_MAP_WIDTH_128|TILE_MODE|LAYER_COLOR_DEPTH_2_BPP
+00089E  2  8D 34 9F         sta     VERA_L1_config
+0008A1  2  A9 20            lda     #TEXT_L1_MAP_BASE_ADDRESS_SHIFTED
+0008A3  2  8D 35 9F         sta     VERA_L1_mapbase
+0008A6  2  A9 40            lda     #TEXT_TILE_DATA_ADDRESS_SHIFTED|TILE_HEIGHT_08_PIXELS|TILE_WIDTH_08_PIXELS
+0008A8  2  8D 36 9F         sta     VERA_L1_tilebase
+0008AB  2  A9 04            lda     #4
+0008AD  2  8D 37 9F         sta     VERA_L1_hscroll_l
+0008B0  2  9C 38 9F         stz     VERA_L1_hscroll_h
+0008B3  2  9C 39 9F         stz     VERA_L1_vscroll_l
+0008B6  2  9C 3A 9F         stz     VERA_L1_vscroll_h
+0008B9  2               
+0008B9  2                   ; setup the tile map information for both layers
+0008B9  2  A9 10 9C 25      VERA_SET_ADDR0 TEXT_L0_MAP_BASE_ADDRESS
+0008BD  2  9F 8D 22 9F  
+0008C1  2  A9 00 8D 21  
+0008CB  2  A9 01 8D 25      VERA_SET_ADDR1 TEXT_L1_MAP_BASE_ADDRESS
+0008CF  2  9F A9 10 8D  
+0008D3  2  22 9F A9 40  
+0008DF  2  A0 00            ldy     #0                      ; start at tile row 0
+0008E1  2               init_text_row:
+0008E1  2  A2 00            ldx     #0                      ; start at tile column 0
+0008E3  2               init_text_cell:
+0008E3  2  A9 5F            lda     #TILE_GROUP_A_OFFSET_0_INDEX_EMPTY ; use transparent (empty) tile
+0008E5  2  8D 23 9F         sta     VERA_data0              ; store tile index (LO) in L0
+0008E8  2  8D 24 9F         sta     VERA_data1              ; store tile index (LO) in L1
+0008EB  2  A9 10            lda     #(1<<4)                 ; get palette offset, flip, tile index (HI)
+0008ED  2  8D 23 9F         sta     VERA_data0              ; set tile params in L0
+0008F0  2  8D 24 9F         sta     VERA_data1              ; set tile params in L1
+0008F3  2  E8               inx                             ; advance column index
+0008F4  2  E0 80            cpx     #TEXT_MAP_TILES_ACROSS  ; are we done with columns?
+0008F6  2  D0 EB            bne     init_text_cell          ; back if no
+0008F8  2  C8               iny                             ; advance row index
+0008F9  2  C0 40            cpy     #TEXT_MAP_TILES_DOWN    ; are we done with rows?
+0008FB  2  D0 E4            bne     init_text_row           ; back if no
+0008FD  2  60               rts
+0008FE  2               
+0008FE  2               ;-------------------------------------------------------------------
+0008FE  2               ; Write text and/or border characters onto the screen.
+0008FE  2               ;-------------------------------------------------------------------
+0008FE  2               
+0008FE  2               l0_pixel_map_row_addresses:
+0008FE  2  02 00 02 01      .repeat TEXT_SCREEN_TILES_DOWN, row
+000902  2  02 02 02 03  
+000906  2  02 04 02 05  
+000976  2                   .addr   TEXT_L0_MAP_BASE_ADDRESS+(row*TEXT_MAP_TILES_ACROSS*2)+2
+000976  2                   .endrepeat
+000976  2               
+000976  2               l1_pixel_map_row_addresses:
+000976  2  02 40 02 41      .repeat TEXT_SCREEN_TILES_DOWN, row
+00097A  2  02 42 02 43  
+00097E  2  02 44 02 45  
+0009EE  2                   .addr   TEXT_L1_MAP_BASE_ADDRESS+(row*TEXT_MAP_TILES_ACROSS*2)+2
+0009EE  2                   .endrepeat
+0009EE  2               
+0009EE  2               ; Find the column in the tile map
+0009EE  2               find_map_address_for_column:
+0009EE  2  18               clc
+0009EF  2  A5 32            lda     ZP_TEMP_INDEX_LO        ; get index for column (LO)
+0009F1  2  0A               asl                             ; multiply by 2 (size of map item)
+0009F2  2  90 02            bcc     dont_inc3               ; go if no overflow
+0009F4  2  E6 33            inc     ZP_TEMP_INDEX_HI        ; adjust index for column (HI)
+0009F6  2               dont_inc3:
+0009F6  2  18               clc
+0009F7  2  65 30            adc     ZP_PTR_LO               ; add pointer into tile map (LO)
+0009F9  2  85 30            sta     ZP_PTR_LO               ; set pointer into tile map (LO)
+0009FB  2  A5 33            lda     ZP_TEMP_INDEX_HI        ; get index for column (HI)
+0009FD  2  65 31            adc     ZP_PTR_HI               ; adjust pointer into tile map (HI)
+0009FF  2  A8               tay                             ; move pointer (HI) to Y
+000A00  2  A6 30            ldx     ZP_PTR_LO               ; get pointer into tile map (LO)
+000A02  2  A9 00            lda     #0                      ; always in bank 0
+000A04  2  60               rts
+000A05  2               
+000A05  2               ; Compute tile map addresses for row & column in layer #0
+000A05  2               convert_map_col_to_address_l0:
+000A05  2  A5 40            lda     ZP_PARAM_ROW            ; get row for text
+000A07  2  0A               asl                             ; multiply by 2
+000A08  2  A8               tay                             ; index into address table
+000A09  2  B9 FE 08         lda     l0_pixel_map_row_addresses,y ; get map address (LO)
+000A0C  2  85 30            sta     ZP_PTR_LO               ; init pointer into tile map (LO)
+000A0E  2  B9 FF 08         lda     l0_pixel_map_row_addresses+1,y ; get map address (HI)
+000A11  2  85 31            sta     ZP_PTR_HI               ; init pointer into tile map (HI)
+000A13  2  20 EE 09         jsr     find_map_address_for_column
+000A16  2  86 60            stx     ZP_TILE_ADDR_0_LO
+000A18  2  84 61            sty     ZP_TILE_ADDR_0_HI
+000A1A  2  09 10 9C 25      VERA_SET_ADDR0_XYA              ; use Data0 register for upper
+000A1E  2  9F 8D 22 9F  
+000A22  2  8C 21 9F 8E  
+000A28  2  60               rts
+000A29  2               
+000A29  2               
+000A29  2               ; Compute tile map addresses for row & column in layer #1
+000A29  2               convert_map_col_to_address_l1:
+000A29  2  A5 40            lda     ZP_PARAM_ROW            ; get row for text
+000A2B  2  0A               asl                             ; multiply by 2
+000A2C  2  A8               tay                             ; index into address table
+000A2D  2  B9 76 09         lda     l1_pixel_map_row_addresses,y ; get map address (LO)
+000A30  2  85 30            sta     ZP_PTR_LO               ; init pointer into tile map (LO)
+000A32  2  B9 77 09         lda     l1_pixel_map_row_addresses+1,y ; get map address (HI)
+000A35  2  85 31            sta     ZP_PTR_HI               ; init pointer into tile map (HI)
+000A37  2  20 EE 09         jsr     find_map_address_for_column
+000A3A  2  86 62            stx     ZP_TILE_ADDR_1_LO
+000A3C  2  84 63            sty     ZP_TILE_ADDR_1_HI
+000A3E  2  48 A9 01 8D      VERA_SET_ADDR1_XYA              ; use Data1 register for upper
+000A42  2  25 9F 68 09  
+000A46  2  10 8D 22 9F  
+000A50  2  60               rts
+000A51  2               
+000A51  2               ; Compute a tile map index using the character column index.
+000A51  2               ; To do this, we multiply by 75% (i.e., 3/4), in integer math.
+000A51  2               ;
+000A51  2               convert_screen_col_to_map_col:
+000A51  2  4A               lsr                             ; divide by 2
+000A52  2  4A               lsr                             ; divide by 2 again
+000A53  2  85 32            sta     ZP_TEMP_INDEX_LO        ; save (column index / 4)
+000A55  2  0A               asl                             ; compute ((column index / 4) * 2)
+000A56  2  18               clc
+000A57  2  65 32            adc     ZP_TEMP_INDEX_LO        ; now ((column index / 4) * 3)
+000A59  2  85 32            sta     ZP_TEMP_INDEX_LO
+000A5B  2  64 33            stz     ZP_TEMP_INDEX_HI        ; always zero at this point
+000A5D  2  60               rts
+000A5E  2               
+000A5E  2               ; Compute the tile map address, which could be in either layer,
+000A5E  2               ; and could use either 0 or 4 pixel offset. The corresponding
+000A5E  2               ; tile map index is about 3/4ths (75%) as large as the original
+000A5E  2               ; character column index, plus some possible small adjustment.
+000A5E  2               ;
+000A5E  2               compute_2nd_tile_map_address:
+000A5E  2  A5 41            lda     ZP_PARAM_COL            ; get character column index
+000A60  2  1A               inc                             ; advance to next column
+000A61  2  80 02            bra    compute_address          ; go finish computing address
+000A63  2               compute_1st_tile_map_address:
+000A63  2  A5 41            lda     ZP_PARAM_COL            ; get character column index
+000A65  2               compute_address:
+000A65  2  85 35            sta     ZP_TEMP_COL             ; save current column index
+000A67  2  20 51 0A         jsr     convert_screen_col_to_map_col
+000A6A  2  9F 35 09         bbs1    ZP_TEMP_COL,case_2_or_3 ; go if column % 4 equals 2 or 3
+000A6D  2  8F 35 03         bbs0    ZP_TEMP_COL,case_1      ; go if column % 4 equals 1
+000A70  2               
+000A70  2               case_0:
+000A70  2                   ; 1st character is on L0, using pixel offset 0
+000A70  2                   ; Map column index adjustment is 0
+000A70  2  4C 05 0A         jmp     convert_map_col_to_address_l0
+000A73  2               
+000A73  2               case_1:
+000A73  2                   ; 1st character is on L1, using pixel offset 4
+000A73  2                   ; Part A map column index adjustment is 0
+000A73  2                   ; Part B map column index adjustment is 1
+000A73  2  4C 29 0A         jmp     convert_map_col_to_address_l1
+000A76  2               
+000A76  2               case_2_or_3:
+000A76  2  8F 35 05         bbs0    ZP_TEMP_COL,case_3      ; go if column % 4 equals 3
+000A79  2               
+000A79  2               case_2:
+000A79  2                   ; 1st character is on L0, using pixel offset 4
+000A79  2                   ; Part A map column index adjustment is 1
+000A79  2                   ; Part B map column index adjustment is 2
+000A79  2  E6 32            inc     ZP_TEMP_INDEX_LO
+000A7B  2  4C 05 0A         jmp     convert_map_col_to_address_l0
+000A7E  2               
+000A7E  2               case_3:
+000A7E  2                   ; 1st character is on L1, using pixel offset 1
+000A7E  2                   ; Map column index adjustment is 2
+000A7E  2  A5 32            lda     ZP_TEMP_INDEX_LO        ; get computed tile map index (LO)
+000A80  2  18               clc
+000A81  2  69 02            adc     #2
+000A83  2  85 32            sta     ZP_TEMP_INDEX_LO        ; save computed tile map index (LO)
+000A85  2  4C 29 0A         jmp     convert_map_col_to_address_l1
+000A88  2               
+000A88  2               ; Compute character tile index (not map index), and tile attributes,
+000A88  2               ; based on given parameters.
+000A88  2               ;
+000A88  2               compute_char_info:
+000A88  2  A2 00            ldx     #0                          ; offset into table of TileGroupLimits structures
+000A8A  2  A5 43            lda     ZP_PARAM_GROUP              ; get tile group number
+000A8C  2  F0 02            beq     use_tile_grp                ; go if using tile group A
+000A8E  2  A2 10            ldx     #.sizeof(TileGroupLimits)   ; advance offset to be tile group B
+000A90  2               use_tile_grp:
+000A90  2  A5 45            lda     ZP_PARAM_PALETTE            ; get palette offset number
+000A92  2  0A               asl                                 ; shift it into bits (7:4)
+000A93  2  0A               asl
+000A94  2  0A               asl
+000A95  2  0A               asl
+000A96  2  85 34            sta     ZP_CHAR_ATTR                ; save shifted palette offset
+000A98  2               
+000A98  2  A5 44            lda     ZP_PARAM_CODE               ; get character code parameter
+000A9A  2  18               clc
+000A9B  2  7D 12 08         adc     tile_group_limits+TileGroupLimits::offset_0_index_start,x
+000A9E  2  85 50            sta     ZP_TILE_INDEX_0             ; set offset 0 tile index (LO)
+000AA0  2  A9 00            lda     #0                          ; prepare to add HI part
+000AA2  2  7D 13 08         adc     tile_group_limits+TileGroupLimits::offset_0_index_start+1,x
+000AA5  2  05 34            ora     ZP_CHAR_ATTR                ; include shifted palette offset
+000AA7  2  85 51            sta     ZP_TILE_ATTR_0              ; set tile attributes & tile index (HI)
+000AA9  2               
+000AA9  2  A0 00            ldy     #0                          ; will hold shifted HI bit
+000AAB  2  A5 44            lda     ZP_PARAM_CODE               ; get character code parameter
+000AAD  2  0A               asl                                 ; multiply by 2
+000AAE  2  90 01            bcc     keep_x                      ; go if no overflow
+000AB0  2  C8               iny                                 ; increment HI part to add
+000AB1  2               keep_x:
+000AB1  2  18               clc
+000AB2  2  7D 14 08         adc     tile_group_limits+TileGroupLimits::offset_4_index_start,x
+000AB5  2  85 52            sta     ZP_TILE_INDEX_4A            ; set offset 4 tile index (part A, LO)
+000AB7  2  98               tya                                 ; prepare to add HI part
+000AB8  2  7D 15 08         adc     tile_group_limits+TileGroupLimits::offset_4_index_start+1,x
+000ABB  2  05 34            ora     ZP_CHAR_ATTR                ; include shifted palette offset
+000ABD  2  85 53            sta     ZP_TILE_ATTR_4A             ; set tile attributes & tile index (part A, HI)
+000ABF  2               
+000ABF  2  A0 00            ldy     #0                          ; will hold shifted HI bit
+000AC1  2  A5 44            lda     ZP_PARAM_CODE               ; get character code parameter
+000AC3  2  0A               asl                                 ; multiply by 2
+000AC4  2  90 01            bcc     keep_x2                     ; go if no overflow
+000AC6  2  C8               iny                                 ; increment HI part to add
+000AC7  2               keep_x2:
+000AC7  2  1A               inc                                 ; advance to part B of offset 4 character
+000AC8  2  18               clc
+000AC9  2  7D 14 08         adc     tile_group_limits+TileGroupLimits::offset_4_index_start,x
+000ACC  2  85 54            sta     ZP_TILE_INDEX_4B            ; set offset 4 tile index (part B, LO)
+000ACE  2  98               tya                                 ; prepare to add HI part
+000ACF  2  7D 15 08         adc     tile_group_limits+TileGroupLimits::offset_4_index_start+1,x
+000AD2  2  05 34            ora     ZP_CHAR_ATTR                ; include shifted palette offset
+000AD4  2  85 55            sta     ZP_TILE_ATTR_4B             ; set tile attributes & tile index (part B, HI)
+000AD6  2  60               rts
+000AD7  2               
+000AD7  2               ; Write a single character tile index multiple times
+000AD7  2               ;
+000AD7  2               ; The character code used here (ZP_PARAM_CODE) is actually a character index
+000AD7  2               ; into the tile data, so its range is $00 to $A8. Printable ASCII characters
+000AD7  2               ; that normally range from $20 to $7E must be reduced by $20 (yielding an index
+000AD7  2               ; ranging $00 to $5E) before this routine is called. The same is true for the
+000AD7  2               ; defined block characters that would range from $80 to $C8 (they must be
+000AD7  2               ; reduced to the range $60 to $A8). Note that character index $7F (reduced to
+000AD7  2               ; $5F) represents a completely empty (transparent) tile, which has no color,
+000AD7  2               ; neither foreground nor background.
+000AD7  2               ;
+000AD7  2               write_repeated_char:
+000AD7  2  A5 42            lda     ZP_PARAM_CNT            ; any more characters to do?
+000AD9  2  F0 5B            beq     text_done               ; go if no
+000ADB  2  20 88 0A         jsr     compute_char_info
+000ADE  2               write_screen_raw_char:
+000ADE  2  20 63 0A         jsr     compute_1st_tile_map_address
+000AE1  2  20 5E 0A         jsr     compute_2nd_tile_map_address
+000AE4  2  9F 41 50         bbs1    ZP_PARAM_COL,do_case_2_or_3 ; go if column % 4 equals 2 or 3
+000AE7  2  8F 41 0E         bbs0    ZP_PARAM_COL,do_case_1      ; go if column % 4 equals 1
+000AEA  2               do_case_0:
+000AEA  2  A5 50            lda     ZP_TILE_INDEX_0         ; get character tile data index
+000AEC  2  8D 23 9F         sta     VERA_data0              ; set character tile data index
+000AEF  2  A5 51            lda     ZP_TILE_ATTR_0          ; get character tile attributes
+000AF1  2  8D 23 9F         sta     VERA_data0              ; set character tile attributes
+000AF4  2  C6 42            dec     ZP_PARAM_CNT            ; we finished one character
+000AF6  2  F0 3E            beq     text_done               ; quit if no more to write
+000AF8  2               do_case_1:
+000AF8  2  A5 52            lda     ZP_TILE_INDEX_4A        ; get character tile data index A
+000AFA  2  8D 24 9F         sta     VERA_data1              ; set character tile data index A
+000AFD  2  A5 53            lda     ZP_TILE_ATTR_4A         ; get character tile attributes A
+000AFF  2  8D 24 9F         sta     VERA_data1              ; set character tile attributes A
+000B02  2  A5 54            lda     ZP_TILE_INDEX_4B        ; get character tile data index B
+000B04  2  8D 24 9F         sta     VERA_data1              ; set character tile data index B
+000B07  2  A5 55            lda     ZP_TILE_ATTR_4B         ; get character tile attributes B
+000B09  2  8D 24 9F         sta     VERA_data1              ; set character tile attributes B
+000B0C  2  C6 42            dec     ZP_PARAM_CNT            ; we finished one character
+000B0E  2  F0 26            beq     text_done               ; quit if no more to write
+000B10  2               do_case_2:
+000B10  2  A5 52            lda     ZP_TILE_INDEX_4A        ; get character tile data index A
+000B12  2  8D 23 9F         sta     VERA_data0              ; set character tile data index A
+000B15  2  A5 53            lda     ZP_TILE_ATTR_4A         ; get character tile attributes A
+000B17  2  8D 23 9F         sta     VERA_data0              ; set character tile attributes A
+000B1A  2  A5 54            lda     ZP_TILE_INDEX_4B        ; get character tile data index B
+000B1C  2  8D 23 9F         sta     VERA_data0              ; set character tile data index B
+000B1F  2  A5 55            lda     ZP_TILE_ATTR_4B         ; get character tile attributes B
+000B21  2  8D 23 9F         sta     VERA_data0              ; set character tile attributes B
+000B24  2  C6 42            dec     ZP_PARAM_CNT            ; we finished one character
+000B26  2  F0 0E            beq     text_done               ; quit if no more to write
+000B28  2               do_case_3:
+000B28  2  A5 50            lda     ZP_TILE_INDEX_0         ; get character tile data index
+000B2A  2  8D 24 9F         sta     VERA_data1              ; set character tile data index
+000B2D  2  A5 51            lda     ZP_TILE_ATTR_0          ; get character tile attributes
+000B2F  2  8D 24 9F         sta     VERA_data1              ; set character tile attributes
+000B32  2  C6 42            dec     ZP_PARAM_CNT            ; we finished one character
+000B34  2  D0 B4            bne     do_case_0               ; back if more to write
+000B36  2               text_done:
+000B36  2  60               rts
+000B37  2               do_case_2_or_3:
+000B37  2  8F 41 EE         bbs0    ZP_PARAM_COL,do_case_3  ; go if column % 4 equals 3
+000B3A  2  80 D4            bra     do_case_2               ; go if column % 4 equals 2
+000B3C  2               
+000B3C  2               ; Write a string of character indexes on a single row
+000B3C  2               ;
+000B3C  2               ; This routine expects ZP_PARAM_STR_PTR to point to a series of
+000B3C  2               ; reduced character/border code indexes (not ASCII codes). The number
+000B3C  2               ; of characters (size of the string) is given by ZP_PARAM_STR_SIZE.
+000B3C  2               ; Other values which must be given (setup prior to calling this
+000B3C  2               ; routine) are ZP_PARAM_ROW, ZP_PARAM_COL, ZP_PARAM_GROUP, and
+000B3C  2               ; ZP_PARAM_PALETTE.
+000B3C  2               ;
+000B3C  2               write_array_of_char_code_indexes:
+000B3C  2  A5 48            lda     ZP_PARAM_STR_SIZE       ; get the length of the string (array size)
+000B3E  2  F0 17            beq     nothing_to_do           ; go if array is empty
+000B40  2               write_array_item:
+000B40  2  B2 46            lda     (ZP_PARAM_STR_PTR)      ; get one character code index
+000B42  2  85 44            sta     ZP_PARAM_CODE           ; set which character code to write
+000B44  2  A9 01            lda     #1                      ; load number of similar characters to write
+000B46  2  85 42            sta     ZP_PARAM_CNT            ; set number of similar characters to write
+000B48  2  20 D7 0A         jsr     write_repeated_char     ; go write a single character code
+000B4B  2  E6 41            inc     ZP_PARAM_COL            ; advance the column on the screen
+000B4D  2  E6 46            inc     ZP_PARAM_STR_PTR_LO     ; advance the array pointer (LO)
+000B4F  2  D0 02            bne     dont_inc2               ; go if no overflow
+000B51  2  E6 47            inc     ZP_PARAM_STR_PTR_HI     ; update the pointer (HI)
+000B53  2               dont_inc2:
+000B53  2  C6 48            dec     ZP_PARAM_STR_SIZE       ; one character is done; reduce the count
+000B55  2  D0 E9            bne     write_array_item        ; back if more characters to write
+000B57  2               nothing_to_do:
+000B57  2  60               rts
+000B58  2               
+000B58  2               ; Write a string of ASCII and/or border characters on a single row
+000B58  2               ;
+000B58  2               ; This routine expects ZP_PARAM_STR_PTR to point to a series of
+000B58  2               ; normal character code values (i.e., ASCII codes and/or border codes).
+000B58  2               ; The number of characters (size of the string) is given by ZP_PARAM_STR_SIZE.
+000B58  2               ; Other values which must be given (setup prior to calling this
+000B58  2               ; routine) are ZP_PARAM_ROW, ZP_PARAM_COL, ZP_PARAM_GROUP, and
+000B58  2               ; ZP_PARAM_PALETTE.
+000B58  2               ;
+000B58  2               write_array_of_char_code_values:
+000B58  2  A5 48            lda     ZP_PARAM_STR_SIZE       ; get the length of the string (array size)
+000B5A  2  F0 1A            beq     nothing_to_do2          ; go if array is empty
+000B5C  2               write_array_item2:
+000B5C  2  B2 46            lda     (ZP_PARAM_STR_PTR)      ; get one character code value
+000B5E  2  38               sec                             ; prepare to subtract
+000B5F  2  E9 20            sbc     #$20                    ; compute character code index
+000B61  2  85 44            sta     ZP_PARAM_CODE           ; set which character code to write
+000B63  2  A9 01            lda     #1                      ; load number of similar characters to write
+000B65  2  85 42            sta     ZP_PARAM_CNT            ; set number of similar characters to write
+000B67  2  20 D7 0A         jsr     write_repeated_char     ; go write a single character code
+000B6A  2  E6 41            inc     ZP_PARAM_COL            ; advance the column on the screen
+000B6C  2  E6 46            inc     ZP_PARAM_STR_PTR_LO     ; advance the array pointer (LO)
+000B6E  2  D0 02            bne     dont_inc4               ; go if no overflow
+000B70  2  E6 47            inc     ZP_PARAM_STR_PTR_HI     ; update the pointer (HI)
+000B72  2               dont_inc4:
+000B72  2  C6 48            dec     ZP_PARAM_STR_SIZE       ; one character is done; reduce the count
+000B74  2  D0 E6            bne     write_array_item2       ; back if more characters to write
+000B76  2               nothing_to_do2:
+000B76  2  60               rts
+000B77  2               
+000B77  2               ; Read a single character tile index and attributes from the screen
+000B77  2               ;
+000B77  2               ; The information is actually read from one of the two tile maps.
+000B77  2               ;
+000B77  2               read_screen_char_raw:
+000B77  2  20 63 0A         jsr     compute_1st_tile_map_address
+000B7A  2  20 5E 0A         jsr     compute_2nd_tile_map_address
+000B7D  2  9F 41 50         bbs1    ZP_PARAM_COL,rr_case_2_or_3 ; go if column % 4 equals 2 or 3
+000B80  2  8F 41 0E         bbs0    ZP_PARAM_COL,rr_case_1      ; go if column % 4 equals 1
+000B83  2               rr_case_0:
+000B83  2  AD 23 9F         lda     VERA_data0              ; get character tile data index
+000B86  2  85 50            sta     ZP_TILE_INDEX_0         ; save character tile data index
+000B88  2  AD 23 9F         lda     VERA_data0              ; get character tile attributes
+000B8B  2  85 51            sta     ZP_TILE_ATTR_0          ; save character tile attributes
+000B8D  2  A9 00            lda     #0                      ; load case number
+000B8F  2  80 3C            bra     set_case                ; go set case number and return
+000B91  2               rr_case_1:
+000B91  2  AD 24 9F         lda     VERA_data1              ; get character tile data index A
+000B94  2  85 52            sta     ZP_TILE_INDEX_4A        ; save character tile data index A
+000B96  2  AD 24 9F         lda     VERA_data1              ; get character tile attributes A
+000B99  2  85 53            sta     ZP_TILE_ATTR_4A         ; save character tile attributes A
+000B9B  2  AD 24 9F         lda     VERA_data1              ; get character tile data index B
+000B9E  2  85 54            sta     ZP_TILE_INDEX_4B        ; save character tile data index B
+000BA0  2  AD 24 9F         lda     VERA_data1              ; get character tile attributes B
+000BA3  2  85 55            sta     ZP_TILE_ATTR_4B         ; save character tile attributes B
+000BA5  2  A9 01            lda     #1                      ; load case number
+000BA7  2  80 24            bra     set_case                ; go set case number and return
+000BA9  2               rr_case_2:
+000BA9  2  AD 23 9F         lda     VERA_data0              ; get character tile data index A
+000BAC  2  85 52            sta     ZP_TILE_INDEX_4A        ; save character tile data index A
+000BAE  2  AD 23 9F         lda     VERA_data0              ; get character tile attributes A
+000BB1  2  85 53            sta     ZP_TILE_ATTR_4A         ; save character tile attributes A
+000BB3  2  AD 23 9F         lda     VERA_data0              ; get character tile data index B
+000BB6  2  85 54            sta     ZP_TILE_INDEX_4B        ; save character tile data index B
+000BB8  2  AD 23 9F         lda     VERA_data0              ; get character tile attributes B
+000BBB  2  85 55            sta     ZP_TILE_ATTR_4B         ; save character tile attributes B
+000BBD  2  A9 02            lda     #2                      ; load case number
+000BBF  2  80 0C            bra     set_case                ; go set case number and return
+000BC1  2               rr_case_3:
+000BC1  2  AD 24 9F         lda     VERA_data1              ; get character tile data index
+000BC4  2  85 50            sta     ZP_TILE_INDEX_0         ; save character tile data index
+000BC6  2  AD 24 9F         lda     VERA_data1              ; get character tile attributes
+000BC9  2  85 51            sta     ZP_TILE_ATTR_0          ; save character tile attributes
+000BCB  2  A9 03            lda     #3                      ; load case number
+000BCD  2               set_case:
+000BCD  2  85 49            sta     ZP_PARAM_CASE_NUM       ; set case number
+000BCF  2  60               rts
+000BD0  2               rr_case_2_or_3:
+000BD0  2  8F 41 EE         bbs0    ZP_PARAM_COL,rr_case_3  ; go if column % 4 equals 3
+000BD3  2  80 D4            bra     rr_case_2               ; go if column % 4 equals 2
+000BD5  2               
+000BD5  1               .include "borders.inc"
+000BD5  2               ; File: borders.asm
+000BD5  2               ; Purpose: Draw boxes, areas, and borders from characters
+000BD5  2               ; Copyright (c) 2023 by Curtis Whitley
+000BD5  2               ;
+000BD5  2               
+000BD5  2               ; In these border style values, the first (leftmost) decimal
+000BD5  2               ; digit tells the number of foreground-color pixels in vertical
+000BD5  2               ; lines. The second (rightmost) decimal digit tells the number
+000BD5  2               ; of foreground-color pixels in horizontal lines.
+000BD5  2               ;
+000BD5  2               BORDER_STYLE_V1_H1  = 11
+000BD5  2               BORDER_STYLE_V1_H2  = 12
+000BD5  2               BORDER_STYLE_V1_H3  = 13
+000BD5  2               
+000BD5  2               BORDER_STYLE_V2_H1  = 21
+000BD5  2               BORDER_STYLE_V2_H2  = 22
+000BD5  2               
+000BD5  2               BORDER_STYLE_V3_H1  = 31
+000BD5  2               BORDER_STYLE_V3_H3  = 33
+000BD5  2               
+000BD5  2               NUM_BORDER_STYLES   = 7
+000BD5  2               
+000BD5  2               ; Character code numbers for border (box/line) characters.
+000BD5  2               ; The commented numbers are indexes of sections of a bitmap
+000BD5  2               ; containing the original drawing of the various border styles,
+000BD5  2               ; and may be ignored; this program does not use those numbers.
+000BD5  2               ; Only the equated (hexadecimal) numbers matter.
+000BD5  2               ;
+000BD5  2               BORDER_B2_R1   = ($80-$20) ; 002
+000BD5  2               BORDER_FULL    = ($81-$20) ; 000
+000BD5  2               BORDER_V3_H3   = ($82-$20) ; 001
+000BD5  2               BORDER_B2_H1   = ($83-$20) ; 003
+000BD5  2               BORDER_B2_L1   = ($84-$20) ; 004
+000BD5  2               BORDER_T3_H1   = ($85-$20) ; 005
+000BD5  2               BORDER_GRID_12 = ($86-$20) ; 006
+000BD5  2               BORDER_B3_R1   = ($87-$20) ; 007
+000BD5  2               BORDER_B1_R3   = ($88-$20) ; 009
+000BD5  2               BORDER_B1_H3   = ($89-$20) ; 010
+000BD5  2               BORDER_B1_L3   = ($8A-$20) ; 011
+000BD5  2               BORDER_B3_L1   = ($8B-$20) ; 013
+000BD5  2               BORDER_B1_R2   = ($8C-$20) ; 016
+000BD5  2               BORDER_B1_H2   = ($8D-$20) ; 017
+000BD5  2               BORDER_B1_L2   = ($8E-$20) ; 018
+000BD5  2               BORDER_B1_R1   = ($8F-$20) ; 021
+000BD5  2               BORDER_H1      = ($90-$20) ; 022
+000BD5  2               BORDER_B1_L1   = ($91-$20) ; 023
+000BD5  2               BORDER_V2      = ($92-$20) ; 024
+000BD5  2               BORDER_B3_R3   = ($93-$20) ; 028
+000BD5  2               BORDER_H3      = ($94-$20) ; 029
+000BD5  2               BORDER_B3_L3   = ($95-$20) ; 030
+000BD5  2               BORDER_V1      = ($96-$20) ; 031
+000BD5  2               BORDER_B2_R2   = ($97-$20) ; 035
+000BD5  2               BORDER_H2      = ($98-$20) ; 036
+000BD5  2               BORDER_B2_L2   = ($99-$20) ; 037
+000BD5  2               BORDER_R1_V1   = ($9A-$20) ; 044
+000BD5  2               BORDER_V2_H1   = ($9B-$20) ; 045
+000BD5  2               BORDER_L1_V1   = ($9C-$20) ; 046
+000BD5  2               BORDER_V3      = ($9D-$20) ; 049
+000BD5  2               BORDER_R3_V3   = ($9E-$20) ; 051
+000BD5  2               BORDER_V1_H3   = ($9F-$20) ; 052
+000BD5  2               BORDER_L3_V3   = ($A0-$20) ; 053
+000BD5  2               BORDER_R2_V2   = ($A1-$20) ; 058
+000BD5  2               BORDER_V1_H2   = ($A2-$20) ; 059
+000BD5  2               BORDER_L2_V2   = ($A3-$20) ; 060
+000BD5  2               BORDER_T1_R1   = ($A4-$20) ; 063
+000BD5  2               BORDER_B1_H1   = ($A5-$20) ; 064
+000BD5  2               BORDER_T1_L1   = ($A6-$20) ; 065
+000BD5  2               BORDER_T3_R3   = ($A7-$20) ; 070
+000BD5  2               BORDER_B3_H3   = ($A8-$20) ; 071
+000BD5  2               BORDER_T3_L3   = ($A9-$20) ; 072
+000BD5  2               BORDER_T2_R2   = ($AA-$20) ; 077
+000BD5  2               BORDER_B2_H2   = ($AB-$20) ; 078
+000BD5  2               BORDER_T2_L2   = ($AC-$20) ; 079
+000BD5  2               BORDER_24_DOTS = ($AD-$20) ; 084
+000BD5  2               BORDER_R2_V1   = ($AE-$20) ; 085
+000BD5  2               BORDER_V2_H2   = ($AF-$20) ; 087
+000BD5  2               BORDER_L2_V1   = ($B0-$20) ; 089
+000BD5  2               BORDER_ALT_12  = ($B1-$20) ; 090
+000BD5  2               BORDER_R1_V3   = ($B2-$20) ; 092
+000BD5  2               BORDER_V1_H1   = ($B3-$20) ; 094
+000BD5  2               BORDER_L1_V3   = ($B4-$20) ; 096
+000BD5  2               BORDER_R1_V2   = ($B5-$20) ; 099
+000BD5  2               BORDER_L1_V2   = ($B6-$20) ; 103
+000BD5  2               BORDER_T1_H1   = ($B7-$20) ; 106
+000BD5  2               BORDER_T3_H3   = ($B8-$20) ; 113
+000BD5  2               BORDER_T2_H2   = ($B9-$20) ; 120
+000BD5  2               BORDER_B3_H1   = ($BA-$20) ; 168
+000BD5  2               BORDER_R3_V1   = ($BB-$20) ; 169
+000BD5  2               BORDER_T2_R1   = ($BC-$20) ; 170
+000BD5  2               BORDER_T2_H1   = ($BD-$20) ; 171
+000BD5  2               BORDER_T2_L1   = ($BE-$20) ; 172
+000BD5  2               BORDER_L3_V1   = ($BF-$20) ; 173
+000BD5  2               BORDER_V3_H1   = ($C0-$20) ; 174
+000BD5  2               BORDER_T3_R1   = ($C1-$20) ; 175
+000BD5  2               BORDER_T1_R3   = ($C2-$20) ; 177
+000BD5  2               BORDER_T1_H3   = ($C3-$20) ; 178
+000BD5  2               BORDER_T1_L3   = ($C4-$20) ; 179
+000BD5  2               BORDER_T3_L1   = ($C5-$20) ; 181
+000BD5  2               BORDER_T1_R2   = ($C6-$20) ; 184
+000BD5  2               BORDER_T1_H2   = ($C7-$20) ; 185
+000BD5  2               BORDER_T1_L2   = ($C8-$20) ; 186
+000BD5  2               
+000BD5  2               ; Definitions of border styles, in terms of character codes
+000BD5  2               ; used to produce them:
+000BD5  2               ;
+000BD5  2               
+000BD5  2                   .struct BorderStyleDefinition
+000BD5  2                       style_code_dec      .byte   ; border style as 2 decimal digits (e.g., 21)
+000BD5  2                       upper_left_code     .byte   ; upper-left corner character tile index
+000BD5  2                       upper_middle_code   .byte   ; upper-tee character tile index
+000BD5  2                       upper_right_code    .byte   ; upper-right corner character tile index
+000BD5  2                       middle_right_code   .byte   ; right-tee character tile index
+000BD5  2                       lower_right_code    .byte   ; lower-right corner character tile index
+000BD5  2                       lower_middle_code   .byte   ; lower-tee character tile index
+000BD5  2                       lower_left_code     .byte   ; lower-left corner character tile index
+000BD5  2                       middle_left_code    .byte   ; left-tee character tile index
+000BD5  2                       horizontal_code     .byte   ; horizontal bar character tile index
+000BD5  2                       vertical_code       .byte   ; vertical bar character tile index
+000BD5  2                       cross_code          .byte   ; horizontal and vertical cross character tile index
+000BD5  2                   .endstruct
+000BD5  2               
+000BD5  2               border_style_definitions:
+000BD5  2               
+000BD5  2  0B               .byte   BORDER_STYLE_V1_H1
+000BD6  2  6F 85 71 7C      .byte   BORDER_B1_R1, BORDER_B1_H1, BORDER_B1_L1, BORDER_L1_V1
+000BDA  2  86 97 84 7A      .byte   BORDER_T1_L1, BORDER_T1_H1, BORDER_T1_R1, BORDER_R1_V1
+000BDE  2  70 76 93         .byte   BORDER_H1, BORDER_V1, BORDER_V1_H1
+000BE1  2               
+000BE1  2  0C               .byte   BORDER_STYLE_V1_H2
+000BE2  2  6C 6D 6E 90      .byte   BORDER_B1_R2, BORDER_B1_H2, BORDER_B1_L2, BORDER_L2_V1
+000BE6  2  A8 A7 A6 8E      .byte   BORDER_T1_L2, BORDER_T1_H2, BORDER_T1_R2, BORDER_R2_V1
+000BEA  2  78 76 82         .byte   BORDER_H2, BORDER_V1, BORDER_V1_H2
+000BED  2               
+000BED  2  0D               .byte   BORDER_STYLE_V1_H3
+000BEE  2  68 69 6A 9F      .byte   BORDER_B1_R3, BORDER_B1_H3, BORDER_B1_L3, BORDER_L3_V1
+000BF2  2  A4 A3 A2 9B      .byte   BORDER_T1_L3, BORDER_T1_H3, BORDER_T1_R3, BORDER_R3_V1
+000BF6  2  74 76 7F         .byte   BORDER_H3, BORDER_V1, BORDER_V1_H3
+000BF9  2               
+000BF9  2  15               .byte   BORDER_STYLE_V2_H1
+000BFA  2  60 63 64 96      .byte   BORDER_B2_R1, BORDER_B2_H1, BORDER_B2_L1, BORDER_L1_V2
+000BFE  2  9E 9D 9C 95      .byte   BORDER_T2_L1, BORDER_T2_H1, BORDER_T2_R1, BORDER_R1_V2
+000C02  2  70 72 7B         .byte   BORDER_H1, BORDER_V2, BORDER_V2_H1
+000C05  2               
+000C05  2  16               .byte   BORDER_STYLE_V2_H2
+000C06  2  77 8B 79 83      .byte   BORDER_B2_R2, BORDER_B2_H2, BORDER_B2_L2, BORDER_L2_V2
+000C0A  2  8C 99 8A 81      .byte   BORDER_T2_L2, BORDER_T2_H2, BORDER_T2_R2, BORDER_R2_V2
+000C0E  2  78 72 8F         .byte   BORDER_H2, BORDER_V2, BORDER_V2_H2
+000C11  2               
+000C11  2  1F               .byte   BORDER_STYLE_V3_H1
+000C12  2  67 9A 6B 94      .byte   BORDER_B3_R1, BORDER_B3_H1, BORDER_B3_L1, BORDER_L1_V3
+000C16  2  A5 65 A1 92      .byte   BORDER_T3_L1, BORDER_T3_H1, BORDER_T3_R1, BORDER_R1_V3
+000C1A  2  70 7D A0         .byte   BORDER_H1, BORDER_V3, BORDER_V3_H1
+000C1D  2               
+000C1D  2  21               .byte   BORDER_STYLE_V3_H3
+000C1E  2  73 88 75 80      .byte   BORDER_B3_R3, BORDER_B3_H3, BORDER_B3_L3, BORDER_L3_V3
+000C22  2  89 98 87 7E      .byte   BORDER_T3_L3, BORDER_T3_H3, BORDER_T3_R3, BORDER_R3_V3
+000C26  2  74 7D 62         .byte   BORDER_H3, BORDER_V3, BORDER_V3_H3
+000C29  2               
+000C29  2               end_border_style_definitions:
+000C29  2               
+000C29  2               ; Compute a pointer to the current style definition
+000C29  2               ;
+000C29  2               find_border_style:
+000C29  2  A9 D5            lda     #<border_style_definitions  ; get pointer to style #0 (LO)
+000C2B  2  85 22            sta     ZP_STYLE_PTR_LO             ; init pointer to style (LO)
+000C2D  2  A9 0B            lda     #>border_style_definitions  ; get pointer to style #0 (HI)
+000C2F  2  85 23            sta     ZP_STYLE_PTR_HI             ; init pointer to style (HI)
+000C31  2  A2 07            ldx     #NUM_BORDER_STYLES          ; init style counter
+000C33  2               style_loop:
+000C33  2  A0 00            ldy     #BorderStyleDefinition::style_code_dec
+000C35  2  B1 22            lda     (ZP_STYLE_PTR),y            ; get first valid style number
+000C37  2  C5 3D            cmp     ZP_BORDER_STYLE             ; compare to given border style number
+000C39  2  F0 10            beq     have_style                  ; go if match
+000C3B  2  18               clc
+000C3C  2  A5 22            lda     ZP_STYLE_PTR_LO             ; get pointer to style (LO)
+000C3E  2  69 0C            adc     #<.sizeof(BorderStyleDefinition) ; add size of border style definition (LO)
+000C40  2  85 22            sta     ZP_STYLE_PTR_LO             ; set pointer to style (LO)
+000C42  2  A5 23            lda     ZP_STYLE_PTR_HI             ; get pointer to style (HI)
+000C44  2  69 00            adc     #>.sizeof(BorderStyleDefinition) ; add size of border style definition (HI)
+000C46  2  85 23            sta     ZP_STYLE_PTR_HI             ; set pointer to style (HI)
+000C48  2  CA               dex                                 ; found correct style yet?
+000C49  2  D0 E8            bne     style_loop                  ; back if no
+000C4B  2               have_style:
+000C4B  2  60               rts
+000C4C  2               
+000C4C  2               ; Draw a border
+000C4C  2               ;
+000C4C  2               draw_border:
+000C4C  2  20 29 0C         jsr     find_border_style           ; compute pointer to border style definition
+000C4F  2  A5 3B            lda     ZP_BORDER_GROUP             ; copy the border group to the character param group
+000C51  2  85 43            sta     ZP_PARAM_GROUP
+000C53  2  A5 3C            lda     ZP_BORDER_PALETTE           ; copy the border palette to the character param palette
+000C55  2  85 45            sta     ZP_PARAM_PALETTE
+000C57  2               
+000C57  2                   ; draw the upper-left corner
+000C57  2  A5 38            lda     ZP_BORDER_ROW
+000C59  2  85 40            sta     ZP_PARAM_ROW
+000C5B  2  A5 39            lda     ZP_BORDER_COL
+000C5D  2  85 41            sta     ZP_PARAM_COL
+000C5F  2  A9 01            lda     #1
+000C61  2  85 42            sta     ZP_PARAM_CNT
+000C63  2  A0 01            ldy     #BorderStyleDefinition::upper_left_code
+000C65  2  B1 22            lda     (ZP_STYLE_PTR),y
+000C67  2  85 44            sta     ZP_PARAM_CODE
+000C69  2  20 D7 0A         jsr     write_repeated_char
+000C6C  2               
+000C6C  2                   ; draw the upper-right corner
+000C6C  2  A5 38            lda     ZP_BORDER_ROW
+000C6E  2  85 40            sta     ZP_PARAM_ROW
+000C70  2  A5 39            lda     ZP_BORDER_COL
+000C72  2  18               clc
+000C73  2  65 3E            adc     ZP_BORDER_WIDTH
+000C75  2  3A               dec
+000C76  2  85 41            sta     ZP_PARAM_COL
+000C78  2  A9 01            lda     #1
+000C7A  2  85 42            sta     ZP_PARAM_CNT
+000C7C  2  A0 03            ldy     #BorderStyleDefinition::upper_right_code
+000C7E  2  B1 22            lda     (ZP_STYLE_PTR),y
+000C80  2  85 44            sta     ZP_PARAM_CODE
+000C82  2  20 D7 0A         jsr     write_repeated_char
+000C85  2               
+000C85  2                   ; draw the lower-left corner
+000C85  2  A5 38            lda     ZP_BORDER_ROW
+000C87  2  18               clc
+000C88  2  65 3F            adc     ZP_BORDER_HEIGHT
+000C8A  2  3A               dec
+000C8B  2  85 40            sta     ZP_PARAM_ROW
+000C8D  2  A5 39            lda     ZP_BORDER_COL
+000C8F  2  85 41            sta     ZP_PARAM_COL
+000C91  2  A9 01            lda     #1
+000C93  2  85 42            sta     ZP_PARAM_CNT
+000C95  2  A0 07            ldy     #BorderStyleDefinition::lower_left_code
+000C97  2  B1 22            lda     (ZP_STYLE_PTR),y
+000C99  2  85 44            sta     ZP_PARAM_CODE
+000C9B  2  20 D7 0A         jsr     write_repeated_char
+000C9E  2               
+000C9E  2                   ; draw the lower-right corner
+000C9E  2  A5 38            lda     ZP_BORDER_ROW
+000CA0  2  18               clc
+000CA1  2  65 3F            adc     ZP_BORDER_HEIGHT
+000CA3  2  3A               dec
+000CA4  2  85 40            sta     ZP_PARAM_ROW
+000CA6  2  A5 39            lda     ZP_BORDER_COL
+000CA8  2  18               clc
+000CA9  2  65 3E            adc     ZP_BORDER_WIDTH
+000CAB  2  3A               dec
+000CAC  2  85 41            sta     ZP_PARAM_COL
+000CAE  2  A9 01            lda     #1
+000CB0  2  85 42            sta     ZP_PARAM_CNT
+000CB2  2  A0 05            ldy     #BorderStyleDefinition::lower_right_code
+000CB4  2  B1 22            lda     (ZP_STYLE_PTR),y
+000CB6  2  85 44            sta     ZP_PARAM_CODE
+000CB8  2  20 D7 0A         jsr     write_repeated_char
+000CBB  2               
+000CBB  2                   ; draw the upper horizontal bar
+000CBB  2  A5 38            lda     ZP_BORDER_ROW
+000CBD  2  85 40            sta     ZP_PARAM_ROW
+000CBF  2  A5 39            lda     ZP_BORDER_COL
+000CC1  2  1A               inc
+000CC2  2  85 41            sta     ZP_PARAM_COL
+000CC4  2  A5 3E            lda     ZP_BORDER_WIDTH
+000CC6  2  3A               dec
+000CC7  2  3A               dec
+000CC8  2  85 42            sta     ZP_PARAM_CNT
+000CCA  2  A0 09            ldy     #BorderStyleDefinition::horizontal_code
+000CCC  2  B1 22            lda     (ZP_STYLE_PTR),y
+000CCE  2  85 44            sta     ZP_PARAM_CODE
+000CD0  2  20 D7 0A         jsr     write_repeated_char
+000CD3  2               
+000CD3  2                   ; draw the lower horizontal bar
+000CD3  2  A5 38            lda     ZP_BORDER_ROW
+000CD5  2  18               clc
+000CD6  2  65 3F            adc     ZP_BORDER_HEIGHT
+000CD8  2  3A               dec
+000CD9  2  85 40            sta     ZP_PARAM_ROW
+000CDB  2  A5 39            lda     ZP_BORDER_COL
+000CDD  2  1A               inc
+000CDE  2  85 41            sta     ZP_PARAM_COL
+000CE0  2  A5 3E            lda     ZP_BORDER_WIDTH
+000CE2  2  3A               dec
+000CE3  2  3A               dec
+000CE4  2  85 42            sta     ZP_PARAM_CNT
+000CE6  2  A0 09            ldy     #BorderStyleDefinition::horizontal_code
+000CE8  2  B1 22            lda     (ZP_STYLE_PTR),y
+000CEA  2  85 44            sta     ZP_PARAM_CODE
+000CEC  2  20 D7 0A         jsr     write_repeated_char
+000CEF  2               
+000CEF  2                   ; draw the left vertical bar
+000CEF  2  A5 38            lda     ZP_BORDER_ROW
+000CF1  2  85 40            sta     ZP_PARAM_ROW
+000CF3  2  A5 39            lda     ZP_BORDER_COL
+000CF5  2  85 41            sta     ZP_PARAM_COL
+000CF7  2  A5 3F            lda     ZP_BORDER_HEIGHT
+000CF9  2  3A               dec
+000CFA  2  3A               dec
+000CFB  2  85 3A            sta     ZP_BORDER_CNT
+000CFD  2  A0 0A            ldy     #BorderStyleDefinition::vertical_code
+000CFF  2  B1 22            lda     (ZP_STYLE_PTR),y
+000D01  2  85 44            sta     ZP_PARAM_CODE
+000D03  2               vert_loop:
+000D03  2  E6 40            inc     ZP_PARAM_ROW
+000D05  2  A9 01            lda     #1
+000D07  2  85 42            sta     ZP_PARAM_CNT
+000D09  2  20 D7 0A         jsr     write_repeated_char
+000D0C  2  C6 3A            dec     ZP_BORDER_CNT
+000D0E  2  D0 F3            bne     vert_loop
+000D10  2               
+000D10  2                   ; draw the right vertical bar
+000D10  2  A5 38            lda     ZP_BORDER_ROW
+000D12  2  85 40            sta     ZP_PARAM_ROW
+000D14  2  A5 39            lda     ZP_BORDER_COL
+000D16  2  18               clc
+000D17  2  65 3E            adc     ZP_BORDER_WIDTH
+000D19  2  3A               dec
+000D1A  2  85 41            sta     ZP_PARAM_COL
+000D1C  2  A5 3F            lda     ZP_BORDER_HEIGHT
+000D1E  2  3A               dec
+000D1F  2  3A               dec
+000D20  2  85 3A            sta     ZP_BORDER_CNT
+000D22  2  A0 0A            ldy     #BorderStyleDefinition::vertical_code
+000D24  2  B1 22            lda     (ZP_STYLE_PTR),y
+000D26  2  85 44            sta     ZP_PARAM_CODE
+000D28  2               vert_loop2:
+000D28  2  E6 40            inc     ZP_PARAM_ROW
+000D2A  2  A9 01            lda     #1
+000D2C  2  85 42            sta     ZP_PARAM_CNT
+000D2E  2  20 D7 0A         jsr     write_repeated_char
+000D31  2  C6 3A            dec     ZP_BORDER_CNT
+000D33  2  D0 F3            bne     vert_loop2
+000D35  2               
+000D35  2                   ; fill the box inside the border, if desired
+000D35  2  A5 37            lda     ZP_BORDER_FILL
+000D37  2  C9 FF            cmp     #$FF
+000D39  2  F0 25            beq     leave_box_empty
+000D3B  2  A5 3F            lda     ZP_BORDER_HEIGHT
+000D3D  2  3A               dec
+000D3E  2  3A               dec
+000D3F  2  30 1F            bmi     leave_box_empty
+000D41  2  85 3A            sta     ZP_BORDER_CNT
+000D43  2               fill_one_row:
+000D43  2  A5 38            lda     ZP_BORDER_ROW
+000D45  2  1A               inc
+000D46  2  85 40            sta     ZP_PARAM_ROW
+000D48  2  A5 39            lda     ZP_BORDER_COL
+000D4A  2  1A               inc
+000D4B  2  85 41            sta     ZP_PARAM_COL
+000D4D  2  A5 3E            lda     ZP_BORDER_WIDTH
+000D4F  2  3A               dec
+000D50  2  3A               dec
+000D51  2  85 42            sta     ZP_PARAM_CNT
+000D53  2  A5 37            lda     ZP_BORDER_FILL
+000D55  2  85 44            sta     ZP_PARAM_CODE
+000D57  2  20 D7 0A         jsr     write_repeated_char
+000D5A  2  E6 38            inc     ZP_BORDER_ROW
+000D5C  2  C6 3A            dec     ZP_BORDER_CNT
+000D5E  2  D0 E3            bne     fill_one_row
+000D60  2               leave_box_empty:
+000D60  2  60               rts
+000D61  2               
+000D61  1               .include "windows.inc"
+000D61  2               ; File: windows.asm
+000D61  2               ; Purpose: Draw windows and write text into them
+000D61  2               ; Copyright (c) 2023 by Curtis Whitley
+000D61  2               ;
+000D61  2               
+000D61  2                   .struct WindowParams
+000D61  2                       upper_left_row      .byte   ; upper-left character row (line) index
+000D61  2                       upper_left_col      .byte   ; upper-left character column index
+000D61  2                       tile_color_group    .byte   ; which character tile group (0 or 1)
+000D61  2                       palette_offset      .byte   ; color palette offset (0..15)
+000D61  2                       border_style        .byte   ; border style number (0..6)
+000D61  2                       fill_char           .byte   ; character used to fill the window, or zero for none
+000D61  2                       total_width         .byte   ; width of window, including border
+000D61  2                       total_height        .byte   ; height of window, including border
+000D61  2                       cur_row             .byte   ; current cursor row within the window (0..total_height-2)
+000D61  2                       cur_col             .byte   ; current cursor column within the window (0..total_width-2)
+000D61  2                   .endstruct
+000D61  2               
+000D61  2               ; Copy window parameters to border parameters
+000D61  2               ;
+000D61  2               copy_window_params_to_border_params:
+000D61  2  A0 00            ldy     #WindowParams::upper_left_row
+000D63  2  B1 24            lda     (ZP_WINDOW_PTR),y
+000D65  2  85 38            sta     ZP_BORDER_ROW
+000D67  2  1A               inc
+000D68  2  85 28            sta     ZP_WINDOW_FIRST_ROW
+000D6A  2               
+000D6A  2  A0 01            ldy     #WindowParams::upper_left_col
+000D6C  2  B1 24            lda     (ZP_WINDOW_PTR),y
+000D6E  2  85 39            sta     ZP_BORDER_COL
+000D70  2  1A               inc
+000D71  2  85 29            sta     ZP_WINDOW_FIRST_COL
+000D73  2               
+000D73  2  A0 02            ldy     #WindowParams::tile_color_group
+000D75  2  B1 24            lda     (ZP_WINDOW_PTR),y
+000D77  2  85 3B            sta     ZP_BORDER_GROUP
+000D79  2               
+000D79  2  A0 03            ldy     #WindowParams::palette_offset
+000D7B  2  B1 24            lda     (ZP_WINDOW_PTR),y
+000D7D  2  85 3C            sta     ZP_BORDER_PALETTE
+000D7F  2               
+000D7F  2  A0 04            ldy     #WindowParams::border_style
+000D81  2  B1 24            lda     (ZP_WINDOW_PTR),y
+000D83  2  85 3D            sta     ZP_BORDER_STYLE
+000D85  2               
+000D85  2  A0 05            ldy     #WindowParams::fill_char
+000D87  2  B1 24            lda     (ZP_WINDOW_PTR),y
+000D89  2  F0 07            beq     no_fill
+000D8B  2  38               sec
+000D8C  2  E9 20            sbc     #$20
+000D8E  2  85 37            sta     ZP_BORDER_FILL
+000D90  2  80 04            bra     next_param
+000D92  2               no_fill:
+000D92  2  A9 FF            lda     #$FF
+000D94  2  85 37            sta     ZP_BORDER_FILL
+000D96  2               next_param:
+000D96  2               
+000D96  2  A0 06            ldy     #WindowParams::total_width
+000D98  2  B1 24            lda     (ZP_WINDOW_PTR),y
+000D9A  2  85 3E            sta     ZP_BORDER_WIDTH
+000D9C  2  3A               dec
+000D9D  2  3A               dec
+000D9E  2  18               clc
+000D9F  2  65 39            adc     ZP_BORDER_COL
+000DA1  2  85 2B            sta     ZP_WINDOW_LAST_COL
+000DA3  2  1A               inc
+000DA4  2  85 2D            sta     ZP_WINDOW_END_COL
+000DA6  2               
+000DA6  2  A0 07            ldy     #WindowParams::total_height
+000DA8  2  B1 24            lda     (ZP_WINDOW_PTR),y
+000DAA  2  85 3F            sta     ZP_BORDER_HEIGHT
+000DAC  2  3A               dec
+000DAD  2  3A               dec
+000DAE  2  18               clc
+000DAF  2  65 38            adc     ZP_BORDER_ROW
+000DB1  2  85 2A            sta     ZP_WINDOW_LAST_ROW
+000DB3  2  1A               inc
+000DB4  2  85 2C            sta     ZP_WINDOW_END_ROW
+000DB6  2  60               rts
+000DB7  2               
+000DB7  2               ; Create a window by drawing its border, possibly filling it
+000DB7  2               ;
+000DB7  2               ; This routine expects ZP_WINDOW_PTR to point to a properly
+000DB7  2               ; initialized window parameter structure.
+000DB7  2               ;
+000DB7  2               create_window:
+000DB7  2  20 61 0D         jsr     copy_window_params_to_border_params
+000DBA  2  20 4C 0C         jsr     draw_border
+000DBD  2  60               rts
+000DBE  2               
+000DBE  2               ; Set temporary current position in window
+000DBE  2               ;
+000DBE  2               set_position_in_window:
+000DBE  2  A0 08            ldy     #WindowParams::cur_row
+000DC0  2  B1 24            lda     (ZP_WINDOW_PTR),y
+000DC2  2  18               clc
+000DC3  2  65 28            adc     ZP_WINDOW_FIRST_ROW
+000DC5  2  85 26            sta     ZP_WINDOW_CUR_ROW
+000DC7  2               
+000DC7  2  A0 09            ldy     #WindowParams::cur_col
+000DC9  2  B1 24            lda     (ZP_WINDOW_PTR),y
+000DCB  2  18               clc
+000DCC  2  65 29            adc     ZP_WINDOW_FIRST_COL
+000DCE  2  85 27            sta     ZP_WINDOW_CUR_COL
+000DD0  2  60               rts
+000DD1  2               
+000DD1  2               ; Update the current position in a window
+000DD1  2               ;
+000DD1  2               update_window_position:
+000DD1  2  A5 26            lda     ZP_WINDOW_CUR_ROW           ; get current row position
+000DD3  2  38               sec
+000DD4  2  E5 28            sbc     ZP_WINDOW_FIRST_ROW         ; subtract first row position
+000DD6  2  A0 08            ldy     #WindowParams::cur_row
+000DD8  2  91 24            sta     (ZP_WINDOW_PTR),y           ; update row position in window
+000DDA  2               
+000DDA  2  A5 27            lda     ZP_WINDOW_CUR_COL           ; get current column position
+000DDC  2  38               sec
+000DDD  2  E5 29            sbc     ZP_WINDOW_FIRST_COL         ; subtract first column position
+000DDF  2  A0 09            ldy     #WindowParams::cur_col
+000DE1  2  91 24            sta     (ZP_WINDOW_PTR),y           ; update column position in window
+000DE3  2  60               rts
+000DE4  2               
+000DE4  2               ; Scroll a window vertically upward, opening the bottow row
+000DE4  2               ;
+000DE4  2               scroll_window_up:
+000DE4  2  A5 28            lda     ZP_WINDOW_FIRST_ROW         ; get first row position
+000DE6  2  1A               inc                                 ; move to second row position
+000DE7  2  85 40            sta     ZP_PARAM_ROW                ; move this row first
+000DE9  2  A5 2A            lda     ZP_WINDOW_LAST_ROW          ; get last row position
+000DEB  2  38               sec
+000DEC  2  E5 28            sbc     ZP_WINDOW_FIRST_ROW         ; compute number of rows to scroll
+000DEE  2  85 2E            sta     ZP_WINDOW_CNT_NOW           ; set number of rows to scroll
+000DF0  2  F0 24            beq     clear_row                   ; go if nothing to do
+000DF2  2               scroll_row:
+000DF2  2  A5 29            lda     ZP_WINDOW_FIRST_COL         ; get first column position
+000DF4  2  85 41            sta     ZP_PARAM_COL                ; move this column first
+000DF6  2               scroll_col:
+000DF6  2  A5 41            lda     ZP_PARAM_COL                ; get column to scroll
+000DF8  2  C5 2D            cmp     ZP_WINDOW_END_COL           ; is the row done already?
+000DFA  2  B0 12            bcs     row_done                    ; go if yes
+000DFC  2  20 77 0B         jsr     read_screen_char_raw        ; read tile map data into variables
+000DFF  2  C6 40            dec     ZP_PARAM_ROW                ; move up one row
+000E01  2  A9 01            lda     #1                          ; need to write one character
+000E03  2  85 42            sta     ZP_PARAM_CNT                ; set number of characters to write
+000E05  2  20 DE 0A         jsr     write_screen_raw_char       ; write tile map data from variables
+000E08  2  E6 40            inc     ZP_PARAM_ROW                ; move back down one row
+000E0A  2  E6 41            inc     ZP_PARAM_COL                ; move over one column
+000E0C  2  80 E8            bra     scroll_col                  ; continue scrolling columns
+000E0E  2               row_done:
+000E0E  2  E6 40            inc     ZP_PARAM_ROW                ; move down to next row
+000E10  2  C6 2E            dec     ZP_WINDOW_CNT_NOW           ; we finished one row
+000E12  2  D0 DE            bne     scroll_row                  ; if not done, continue scrolling
+000E14  2  C6 40            dec     ZP_PARAM_ROW                ; move back to the row to clear
+000E16  2               clear_row:
+000E16  2  A5 29            lda     ZP_WINDOW_FIRST_COL         ; get first column position
+000E18  2  85 41            sta     ZP_PARAM_COL                ; move this column first
+000E1A  2  A5 2D            lda     ZP_WINDOW_END_COL           ; get right border column position
+000E1C  2  38               sec
+000E1D  2  E5 29            sbc     ZP_WINDOW_FIRST_COL         ; compute number of characters to erase
+000E1F  2  85 42            sta     ZP_PARAM_CNT                ; set number of characters to erase
+000E21  2  A0 05            ldy     #WindowParams::fill_char    ; load offset to the window fill character
+000E23  2  B1 24            lda     (ZP_WINDOW_PTR),y           ; get the window fill character
+000E25  2  38               sec
+000E26  2  E9 20            sbc     #$20                        ; convert ASCII/border code to tile index
+000E28  2  85 44            sta     ZP_PARAM_CODE               ; set the character code to write
+000E2A  2  20 D7 0A         jsr     write_repeated_char
+000E2D  2               scroll_done:
+000E2D  2  60               rts
+000E2E  2               
+000E2E  2               ; Write an array of text to a window
+000E2E  2               ;
+000E2E  2               ; Before calling this routine, setup ZP_PARAM_STR_PTR
+000E2E  2               ; and ZP_PARAM_STR_SIZE. After calling, both of those
+000E2E  2               ; will have been modified.
+000E2E  2               ;
+000E2E  2               ; This routine expects ZP_WINDOW_PTR to point to a properly
+000E2E  2               ; initialized window parameter structure, and that the
+000E2E  2               ; create_window routine has already been called, just once.
+000E2E  2               ;
+000E2E  2               write_to_window:
+000E2E  2  20 61 0D         jsr     copy_window_params_to_border_params
+000E31  2  20 BE 0D         jsr     set_position_in_window
+000E34  2               write_string:
+000E34  2  A5 48            lda     ZP_PARAM_STR_SIZE           ; get the number of remaining characters
+000E36  2  F0 4B            beq     write_done                  ; go if nothing left to do
+000E38  2  A5 2D            lda     ZP_WINDOW_END_COL           ; get right border column
+000E3A  2  38               sec
+000E3B  2  E5 27            sbc     ZP_WINDOW_CUR_COL           ; subtract current column to yield space left
+000E3D  2  C5 48            cmp     ZP_PARAM_STR_SIZE           ; enough room for remaining characters?
+000E3F  2  90 08            bcc     write_substring             ; go if no
+000E41  2  A5 48            lda     ZP_PARAM_STR_SIZE           ; get the number of remaining characters
+000E43  2  85 2E            sta     ZP_WINDOW_CNT_NOW           ; save how many characters to write now
+000E45  2  64 2F            stz     ZP_WINDOW_CNT_REM           ; clear how many characters to write later
+000E47  2  80 0D            bra     write_win_chars             ; go write some characters
+000E49  2               write_substring:
+000E49  2  85 2E            sta     ZP_WINDOW_CNT_NOW           ; save how many characters to write now
+000E4B  2  A5 48            lda     ZP_PARAM_STR_SIZE           ; get the number of remaining characters
+000E4D  2  38               sec
+000E4E  2  E5 2E            sbc     ZP_WINDOW_CNT_NOW           ; compute chars left after this write
+000E50  2  85 2F            sta     ZP_WINDOW_CNT_REM           ; save how many characters to write later
+000E52  2  A5 2E            lda     ZP_WINDOW_CNT_NOW           ; get how many characters to write now
+000E54  2  85 48            sta     ZP_PARAM_STR_SIZE           ; set number of characters for this write
+000E56  2               write_win_chars:
+000E56  2  A5 26            lda     ZP_WINDOW_CUR_ROW           ; get current row position
+000E58  2  85 40            sta     ZP_PARAM_ROW                ; set row position for writing
+000E5A  2  A5 27            lda     ZP_WINDOW_CUR_COL           ; get current column position
+000E5C  2  85 41            sta     ZP_PARAM_COL                ; set column position for writing
+000E5E  2  20 58 0B         jsr     write_array_of_char_code_values ; write remaining characters
+000E61  2  A5 2F            lda     ZP_WINDOW_CNT_REM           ; get number of characters now remaining
+000E63  2  85 48            sta     ZP_PARAM_STR_SIZE           ; prepare for possible additional writing
+000E65  2  A5 2E            lda     ZP_WINDOW_CNT_NOW           ; get the number of characters just written
+000E67  2  18               clc
+000E68  2  65 27            adc     ZP_WINDOW_CUR_COL           ; add current column position
+000E6A  2  85 27            sta     ZP_WINDOW_CUR_COL           ; save new current column position
+000E6C  2  C5 2D            cmp     ZP_WINDOW_END_COL           ; did we complete the row (line)?
+000E6E  2  90 13            bcc     write_done                  ; go if no
+000E70  2  A5 26            lda     ZP_WINDOW_CUR_ROW           ; get current row position
+000E72  2  C5 2A            cmp     ZP_WINDOW_LAST_ROW          ; are we at the bottom already?
+000E74  2  B0 04            bcs     must_scroll                 ; go if yes
+000E76  2  E6 26            inc     ZP_WINDOW_CUR_ROW           ; move to the next row
+000E78  2  80 03            bra     set_first_col               ; go set column to first one
+000E7A  2               must_scroll:
+000E7A  2  20 E4 0D         jsr     scroll_window_up            ; make room for a new row
+000E7D  2               set_first_col:
+000E7D  2  A5 29            lda     ZP_WINDOW_FIRST_COL         ; get column position on the new row
+000E7F  2  85 27            sta     ZP_WINDOW_CUR_COL           ; set new current column
+000E81  2  80 B1            bra     write_string                ; continue writing until done
+000E83  2               write_done:
+000E83  2  4C D1 0D         jmp     update_window_position      ; go update the position and return
+000E86  2               
+000E86  1               
+000E86  1  00 00        default_irq_vector: .addr 0
+000E88  1               
+000E88  1                   .macro PAL_RGB r1, g1, b1, r2, g2, b2, r3, g3, b3
+000E88  1                       .byte   (g1<<4)|b1,r1, (g2<<4)|b2,r2, (g3<<4)|b3,r3
+000E88  1                   .endmacro
+000E88  1               
+000E88  1               palette_colors:
+000E88  1                   ;       color#1  color#2  color#3
+000E88  1  00 00 FF 0F      PAL_RGB 0,0,0,15,15,15,0,0,0    ; palette offset 1
+000E8C  1  00 00        
+000E8E  1  00 00 00 0F      PAL_RGB 0,0,0, 15,0,0, 0,0,0      ; palette offset 2
+000E92  1  00 00        
+000E94  1  00 00 0F 00      PAL_RGB 0,0,0, 0,0,15, 0,0,0      ; palette offset 3
+000E98  1  00 00        
+000E9A  1  00 00 F0 00      PAL_RGB 0,0,0, 0,15,0, 0,0,0      ; palette offset 4
+000E9E  1  00 00        
+000EA0  1  00 00 F0 0F      PAL_RGB 0,0,0, 15,15,0, 0,0,0     ; palette offset 5
+000EA4  1  00 00        
+000EA6  1  00 08 FF 0F      PAL_RGB 8,0,0, 15,15,15, 8,0,0    ; palette offset 6
+000EAA  1  00 08        
+000EAC  1  08 00 FF 0F      PAL_RGB 0,0,8, 15,15,15, 0,0,8    ; palette offset 7
+000EB0  1  08 00        
+000EB2  1  C0 0C 00 00      PAL_RGB 12,12,0, 0,0,0, 12,12,0   ; palette offset 8
+000EB6  1  C0 0C        
+000EB8  1  80 00 FF 0F      PAL_RGB 0,8,0, 15,15,15, 0,8,0    ; palette offset 9
+000EBC  1  80 00        
+000EBE  1  CC 0C 00 00      PAL_RGB 12,12,12, 0,0,0, 12,12,12 ; palette offset 10
+000EC2  1  CC 0C        
+000EC4  1  55 05 FF 0F      PAL_RGB 5,5,5, 15,15,15, 5,5,5    ; palette offset 11
+000EC8  1  55 05        
+000ECA  1  06 06 F0 0F      PAL_RGB 6,0,6, 15,15,0, 6,0,6     ; palette offset 12
+000ECE  1  06 06        
+000ED0  1  0E 0E 00 00      PAL_RGB 14,0,14, 0,0,0, 14,0,14   ; palette offset 13
+000ED4  1  0E 0E        
+000ED6  1  CC 00 00 00      PAL_RGB 0,12,12, 0,0,0, 0,12,12   ; palette offset 14
+000EDA  1  CC 00        
+000EDC  1  8C 04 00 00      PAL_RGB 4,8,12, 0,0,0, 4,8,12     ; palette offset 15
+000EE0  1  8C 04        
+000EE2  1               end_palette_colors:
+000EE2  1               
+000EE2  1               text_array:
+000EE2  1  xx xx xx xx      .res    96+73
+000EE6  1  xx xx xx xx  
+000EEA  1  xx xx xx xx  
+000F8B  1               end_text_array:
+000F8B  1               
+000F8B  1               window_0:
+000F8B  1  00               .byte   0   ; upper_left_row
+000F8C  1  00               .byte   0   ; upper_left_col
+000F8D  1  00               .byte   0   ; tile_color_group
+000F8E  1  01               .byte   1   ; palette_offset
+000F8F  1  0B               .byte   11  ; border_style
+000F90  1  20               .byte   $20 ; fill_char
+000F91  1  12               .byte   18  ; total_width
+000F92  1  0D               .byte   13  ; total_height
+000F93  1  00               .byte   0   ; cur_row
+000F94  1  00               .byte   0   ; cur_col
+000F95  1               
+000F95  1               window_1:
+000F95  1  00               .byte   0   ; upper_left_row
+000F96  1  12               .byte   18  ; upper_left_col
+000F97  1  01               .byte   1   ; tile_color_group
+000F98  1  01               .byte   1   ; palette_offset
+000F99  1  0C               .byte   12  ; border_style
+000F9A  1  20               .byte   $20 ; fill_char
+000F9B  1  12               .byte   18  ; total_width
+000F9C  1  0D               .byte   13  ; total_height
+000F9D  1  00               .byte   0   ; cur_row
+000F9E  1  00               .byte   0   ; cur_col
+000F9F  1               
+000F9F  1               window_2:
+000F9F  1  00               .byte   0   ; upper_left_row
+000FA0  1  24               .byte   36  ; upper_left_col
+000FA1  1  00               .byte   0   ; tile_color_group
+000FA2  1  02               .byte   2   ; palette_offset
+000FA3  1  0D               .byte   13  ; border_style
+000FA4  1  20               .byte   $20 ; fill_char
+000FA5  1  12               .byte   18  ; total_width
+000FA6  1  0D               .byte   13  ; total_height
+000FA7  1  00               .byte   0   ; cur_row
+000FA8  1  00               .byte   0   ; cur_col
+000FA9  1               
+000FA9  1               window_3:
+000FA9  1  00               .byte   0   ; upper_left_row
+000FAA  1  36               .byte   54  ; upper_left_col
+000FAB  1  01               .byte   1   ; tile_color_group
+000FAC  1  02               .byte   2   ; palette_offset
+000FAD  1  0D               .byte   13  ; border_style
+000FAE  1  20               .byte   $20 ; fill_char
+000FAF  1  12               .byte   18  ; total_width
+000FB0  1  0D               .byte   13  ; total_height
+000FB1  1  00               .byte   0   ; cur_row
+000FB2  1  00               .byte   0   ; cur_col
+000FB3  1               
+000FB3  1               window_4:
+000FB3  1  00               .byte   0   ; upper_left_row
+000FB4  1  48               .byte   72  ; upper_left_col
+000FB5  1  00               .byte   0   ; tile_color_group
+000FB6  1  03               .byte   3   ; palette_offset
+000FB7  1  0D               .byte   13  ; border_style
+000FB8  1  20               .byte   $20 ; fill_char
+000FB9  1  12               .byte   18  ; total_width
+000FBA  1  0D               .byte   13  ; total_height
+000FBB  1  00               .byte   0   ; cur_row
+000FBC  1  00               .byte   0   ; cur_col
+000FBD  1               
+000FBD  1               window_5:
+000FBD  1  00               .byte   0   ; upper_left_row
+000FBE  1  5A               .byte   90  ; upper_left_col
+000FBF  1  01               .byte   1   ; tile_color_group
+000FC0  1  03               .byte   3   ; palette_offset
+000FC1  1  0D               .byte   13  ; border_style
+000FC2  1  20               .byte   $20 ; fill_char
+000FC3  1  10               .byte   16  ; total_width
+000FC4  1  0D               .byte   13  ; total_height
+000FC5  1  00               .byte   0   ; cur_row
+000FC6  1  00               .byte   0   ; cur_col
+000FC7  1               
+000FC7  1               window_b0:
+000FC7  1  0D               .byte   13  ; upper_left_row
+000FC8  1  00               .byte   0   ; upper_left_col
+000FC9  1  00               .byte   0   ; tile_color_group
+000FCA  1  04               .byte   4   ; palette_offset
+000FCB  1  15               .byte   21  ; border_style
+000FCC  1  20               .byte   $20 ; fill_char
+000FCD  1  12               .byte   18  ; total_width
+000FCE  1  0D               .byte   13  ; total_height
+000FCF  1  00               .byte   0   ; cur_row
+000FD0  1  00               .byte   0   ; cur_col
+000FD1  1               
+000FD1  1               window_b1:
+000FD1  1  0D               .byte   13  ; upper_left_row
+000FD2  1  12               .byte   18  ; upper_left_col
+000FD3  1  01               .byte   1   ; tile_color_group
+000FD4  1  04               .byte   4   ; palette_offset
+000FD5  1  16               .byte   22  ; border_style
+000FD6  1  20               .byte   $20 ; fill_char
+000FD7  1  12               .byte   18  ; total_width
+000FD8  1  0D               .byte   13  ; total_height
+000FD9  1  00               .byte   0   ; cur_row
+000FDA  1  00               .byte   0   ; cur_col
+000FDB  1               
+000FDB  1               window_b2:
+000FDB  1  0D               .byte   13  ; upper_left_row
+000FDC  1  24               .byte   36  ; upper_left_col
+000FDD  1  00               .byte   0   ; tile_color_group
+000FDE  1  05               .byte   5   ; palette_offset
+000FDF  1  21               .byte   33  ; border_style
+000FE0  1  20               .byte   $20 ; fill_char
+000FE1  1  12               .byte   18  ; total_width
+000FE2  1  0D               .byte   13  ; total_height
+000FE3  1  00               .byte   0   ; cur_row
+000FE4  1  00               .byte   0   ; cur_col
+000FE5  1               
+000FE5  1               window_b3:
+000FE5  1  0D               .byte   13  ; upper_left_row
+000FE6  1  36               .byte   54  ; upper_left_col
+000FE7  1  01               .byte   1   ; tile_color_group
+000FE8  1  05               .byte   5   ; palette_offset
+000FE9  1  0B               .byte   11  ; border_style
+000FEA  1  20               .byte   $20 ; fill_char
+000FEB  1  12               .byte   18  ; total_width
+000FEC  1  0D               .byte   13  ; total_height
+000FED  1  00               .byte   0   ; cur_row
+000FEE  1  00               .byte   0   ; cur_col
+000FEF  1               
+000FEF  1               window_b4:
+000FEF  1  0D               .byte   13  ; upper_left_row
+000FF0  1  48               .byte   72  ; upper_left_col
+000FF1  1  00               .byte   0   ; tile_color_group
+000FF2  1  06               .byte   6   ; palette_offset
+000FF3  1  0C               .byte   12  ; border_style
+000FF4  1  20               .byte   $20 ; fill_char
+000FF5  1  12               .byte   18  ; total_width
+000FF6  1  0D               .byte   13  ; total_height
+000FF7  1  00               .byte   0   ; cur_row
+000FF8  1  00               .byte   0   ; cur_col
+000FF9  1               
+000FF9  1               window_b5:
+000FF9  1  0D               .byte   13  ; upper_left_row
+000FFA  1  5A               .byte   90  ; upper_left_col
+000FFB  1  01               .byte   1   ; tile_color_group
+000FFC  1  06               .byte   6   ; palette_offset
+000FFD  1  0D               .byte   13  ; border_style
+000FFE  1  20               .byte   $20 ; fill_char
+000FFF  1  10               .byte   16  ; total_width
+001000  1  0D               .byte   13  ; total_height
+001001  1  00               .byte   0   ; cur_row
+001002  1  00               .byte   0   ; cur_col
+001003  1               
+001003  1               window_c0:
+001003  1  1A               .byte   26  ; upper_left_row
+001004  1  00               .byte   0   ; upper_left_col
+001005  1  00               .byte   0   ; tile_color_group
+001006  1  0F               .byte   15  ; palette_offset
+001007  1  15               .byte   21  ; border_style
+001008  1  20               .byte   $20 ; fill_char
+001009  1  12               .byte   18  ; total_width
+00100A  1  0D               .byte   13  ; total_height
+00100B  1  00               .byte   0   ; cur_row
+00100C  1  00               .byte   0   ; cur_col
+00100D  1               
+00100D  1               window_c1:
+00100D  1  1A               .byte   26  ; upper_left_row
+00100E  1  12               .byte   18  ; upper_left_col
+00100F  1  01               .byte   1   ; tile_color_group
+001010  1  05               .byte   5   ; palette_offset
+001011  1  16               .byte   22  ; border_style
+001012  1  20               .byte   $20 ; fill_char
+001013  1  12               .byte   18  ; total_width
+001014  1  0D               .byte   13  ; total_height
+001015  1  00               .byte   0   ; cur_row
+001016  1  00               .byte   0   ; cur_col
+001017  1               
+001017  1               window_c2:
+001017  1  1A               .byte   26  ; upper_left_row
+001018  1  24               .byte   36  ; upper_left_col
+001019  1  00               .byte   0   ; tile_color_group
+00101A  1  06               .byte   6   ; palette_offset
+00101B  1  0C               .byte   12  ; border_style
+00101C  1  20               .byte   $20 ; fill_char
+00101D  1  12               .byte   18  ; total_width
+00101E  1  0D               .byte   13  ; total_height
+00101F  1  00               .byte   0   ; cur_row
+001020  1  00               .byte   0   ; cur_col
+001021  1               
+001021  1               window_c3:
+001021  1  1A               .byte   26  ; upper_left_row
+001022  1  36               .byte   54  ; upper_left_col
+001023  1  01               .byte   1   ; tile_color_group
+001024  1  0E               .byte   14  ; palette_offset
+001025  1  1F               .byte   31  ; border_style
+001026  1  20               .byte   $20 ; fill_char
+001027  1  12               .byte   18  ; total_width
+001028  1  0D               .byte   13  ; total_height
+001029  1  00               .byte   0   ; cur_row
+00102A  1  00               .byte   0   ; cur_col
+00102B  1               
+00102B  1               window_c4:
+00102B  1  1A               .byte   26  ; upper_left_row
+00102C  1  48               .byte   72  ; upper_left_col
+00102D  1  00               .byte   0   ; tile_color_group
+00102E  1  07               .byte   7   ; palette_offset
+00102F  1  21               .byte   33  ; border_style
+001030  1  20               .byte   $20 ; fill_char
+001031  1  12               .byte   18  ; total_width
+001032  1  0D               .byte   13  ; total_height
+001033  1  00               .byte   0   ; cur_row
+001034  1  00               .byte   0   ; cur_col
+001035  1               
+001035  1               window_c5:
+001035  1  1A               .byte   26  ; upper_left_row
+001036  1  5A               .byte   90  ; upper_left_col
+001037  1  01               .byte   1   ; tile_color_group
+001038  1  07               .byte   7   ; palette_offset
+001039  1  15               .byte   21  ; border_style
+00103A  1  20               .byte   $20 ; fill_char
+00103B  1  10               .byte   16  ; total_width
+00103C  1  0D               .byte   13  ; total_height
+00103D  1  00               .byte   0   ; cur_row
+00103E  1  00               .byte   0   ; cur_col
+00103F  1               
+00103F  1               window_d0:
+00103F  1  27               .byte   39  ; upper_left_row
+001040  1  00               .byte   0   ; upper_left_col
+001041  1  00               .byte   0   ; tile_color_group
+001042  1  08               .byte   8   ; palette_offset
+001043  1  15               .byte   21  ; border_style
+001044  1  20               .byte   $20 ; fill_char
+001045  1  12               .byte   18  ; total_width
+001046  1  0D               .byte   13  ; total_height
+001047  1  00               .byte   0   ; cur_row
+001048  1  00               .byte   0   ; cur_col
+001049  1               
+001049  1               window_d1:
+001049  1  27               .byte   39  ; upper_left_row
+00104A  1  12               .byte   18  ; upper_left_col
+00104B  1  01               .byte   1   ; tile_color_group
+00104C  1  09               .byte   9   ; palette_offset
+00104D  1  16               .byte   22  ; border_style
+00104E  1  20               .byte   $20 ; fill_char
+00104F  1  12               .byte   18  ; total_width
+001050  1  0D               .byte   13  ; total_height
+001051  1  00               .byte   0   ; cur_row
+001052  1  00               .byte   0   ; cur_col
+001053  1               
+001053  1               window_d2:
+001053  1  27               .byte   39  ; upper_left_row
+001054  1  24               .byte   36  ; upper_left_col
+001055  1  00               .byte   0   ; tile_color_group
+001056  1  0A               .byte   10  ; palette_offset
+001057  1  0C               .byte   12  ; border_style
+001058  1  20               .byte   $20 ; fill_char
+001059  1  12               .byte   18  ; total_width
+00105A  1  0D               .byte   13  ; total_height
+00105B  1  00               .byte   0   ; cur_row
+00105C  1  00               .byte   0   ; cur_col
+00105D  1               
+00105D  1               window_d3:
+00105D  1  27               .byte   39  ; upper_left_row
+00105E  1  36               .byte   54  ; upper_left_col
+00105F  1  01               .byte   1   ; tile_color_group
+001060  1  0B               .byte   11  ; palette_offset
+001061  1  1F               .byte   31  ; border_style
+001062  1  20               .byte   $20 ; fill_char
+001063  1  12               .byte   18  ; total_width
+001064  1  0D               .byte   13  ; total_height
+001065  1  00               .byte   0   ; cur_row
+001066  1  00               .byte   0   ; cur_col
+001067  1               
+001067  1               window_d4:
+001067  1  27               .byte   39  ; upper_left_row
+001068  1  48               .byte   72  ; upper_left_col
+001069  1  01               .byte   1   ; tile_color_group
+00106A  1  0C               .byte   12  ; palette_offset
+00106B  1  21               .byte   33  ; border_style
+00106C  1  20               .byte   $20 ; fill_char
+00106D  1  12               .byte   18  ; total_width
+00106E  1  0D               .byte   13  ; total_height
+00106F  1  00               .byte   0   ; cur_row
+001070  1  00               .byte   0   ; cur_col
+001071  1               
+001071  1               window_d5:
+001071  1  27               .byte   39  ; upper_left_row
+001072  1  5A               .byte   90  ; upper_left_col
+001073  1  01               .byte   1   ; tile_color_group
+001074  1  0D               .byte   13  ; palette_offset
+001075  1  15               .byte   21  ; border_style
+001076  1  20               .byte   $20 ; fill_char
+001077  1  10               .byte   16  ; total_width
+001078  1  0D               .byte   13  ; total_height
+001079  1  00               .byte   0   ; cur_row
+00107A  1  00               .byte   0   ; cur_col
+00107B  1               
+00107B  1               window_e:
+00107B  1  34               .byte   52  ; upper_left_row
+00107C  1  00               .byte   0   ; upper_left_col
+00107D  1  01               .byte   1   ; tile_color_group
+00107E  1  06               .byte   6   ; palette_offset
+00107F  1  0B               .byte   11  ; border_style
+001080  1  2E               .byte   $2E ; fill_char
+001081  1  6A               .byte   106 ; total_width
+001082  1  08               .byte   8   ; total_height
+001083  1  00               .byte   0   ; cur_row
+001084  1  00               .byte   0   ; cur_col
+001085  1               
+001085  1               start:
+001085  1  9C 25 9F         stz     VERA_ctrl     ; no reset/DCSEL/ADDRSEL
+001088  1  9C 29 9F         stz     VERA_dc_video ; disable display
+00108B  1               
+00108B  1  9C 25 9F A9      FILLVRAM $00, $00000, $8000
+00108F  1  10 8D 22 9F  
+001093  1  A9 00 8D 21  
+0010B8  1  9C 25 9F A9      FILLVRAM $00, $08000, $8000
+0010BC  1  10 8D 22 9F  
+0010C0  1  A9 80 8D 21  
+0010E5  1  9C 25 9F A9      FILLVRAM $00, $10000, $8000
+0010E9  1  11 8D 22 9F  
+0010ED  1  A9 00 8D 21  
+001112  1  9C 25 9F A9      FILLVRAM $00, $18000, $79C0
+001116  1  11 8D 22 9F  
+00111A  1  A9 80 8D 21  
+00113F  1  9C 25 9F A9      FILLVRAM $00, $1FC00, $0400
+001143  1  11 8D 22 9F  
+001147  1  A9 FC 8D 21  
+00116C  1               
+00116C  1                   ; setup some palette colors
+00116C  1  A9 88            lda     #<palette_colors
+00116E  1  85 22            sta     ZP_STYLE_PTR_LO
+001170  1  A9 0E            lda     #>palette_colors
+001172  1  85 23            sta     ZP_STYLE_PTR_HI
+001174  1  A9 22            lda     #<(VRAM_palette+$10*2+2)
+001176  1  85 30            sta     ZP_PTR_LO
+001178  1  A9 FA            lda     #>(VRAM_palette+$10*2+2)
+00117A  1  85 31            sta     ZP_PTR_HI
+00117C  1               setup_colors:
+00117C  1  A6 30            ldx     ZP_PTR_LO
+00117E  1  A4 31            ldy     ZP_PTR_HI
+001180  1  A9 01            lda     #^VRAM_palette
+001182  1  09 10 9C 25      VERA_SET_ADDR0_XYA
+001186  1  9F 8D 22 9F  
+00118A  1  8C 21 9F 8E  
+001190  1  A0 00            ldy     #0
+001192  1               copy_color:
+001192  1  B1 22            lda     (ZP_STYLE_PTR),y
+001194  1  8D 23 9F         sta     VERA_data0
+001197  1  C8               iny
+001198  1  C0 06            cpy     #6
+00119A  1  D0 F6            bne     copy_color
+00119C  1  A5 22            lda     ZP_STYLE_PTR_LO
+00119E  1  18               clc
+00119F  1  69 06            adc     #6
+0011A1  1  85 22            sta     ZP_STYLE_PTR_LO
+0011A3  1  90 02            bcc     no_ptr_inc
+0011A5  1  E6 23            inc     ZP_STYLE_PTR_HI
+0011A7  1               no_ptr_inc:
+0011A7  1  A5 30            lda     ZP_PTR_LO
+0011A9  1  18               clc
+0011AA  1  69 20            adc     #$10*2
+0011AC  1  85 30            sta     ZP_PTR_LO
+0011AE  1  90 02            bcc     no_ptr_inc2
+0011B0  1  E6 31            inc     ZP_PTR_HI
+0011B2  1               no_ptr_inc2:
+0011B2  1  C9 02            cmp     #$02
+0011B4  1  D0 C6            bne     setup_colors
+0011B6  1               
+0011B6  1                   ; turn on video layers
+0011B6  1  9C 25 9F         stz     VERA_ctrl     ; no reset/DCSEL/ADDRSEL
+0011B9  1  A9 31            lda     #ENABLE_LAYER_0|ENABLE_LAYER_1|OUTPUT_MODE_VGA
+0011BB  1  8D 29 9F         sta     VERA_dc_video
+0011BE  1               
+0011BE  1                   ; prepare the tile system
+0011BE  1  20 47 08         jsr     load_text_data
+0011C1  1                   ;jsr     load_palette   -- don't do for this demo
+0011C1  1  20 6D 14         jsr     init_global_video_regs
+0011C4  1  20 7F 08         jsr     init_text_tile_information
+0011C7  1               
+0011C7  1                   ; create some sample text data
+0011C7  1  A9 E2            lda     #<text_array
+0011C9  1  85 46            sta     ZP_PARAM_STR_PTR_LO
+0011CB  1  A9 0E            lda     #>text_array
+0011CD  1  85 47            sta     ZP_PARAM_STR_PTR_HI
+0011CF  1  A9 A9            lda     #end_text_array-text_array
+0011D1  1  85 48            sta     ZP_PARAM_STR_SIZE
+0011D3  1  A0 00            ldy     #0
+0011D5  1               make_data2:
+0011D5  1  98               tya
+0011D6  1  18               clc
+0011D7  1  69 20            adc     #$20
+0011D9  1  91 46            sta     (ZP_PARAM_STR_PTR),y
+0011DB  1  C8               iny
+0011DC  1  C0 A9            cpy     #end_text_array-text_array
+0011DE  1  D0 F5            bne     make_data2
+0011E0  1               
+0011E0  1                   ; write data to sample text windows
+0011E0  1               
+0011E0  1  A9 8B            lda     #<window_0
+0011E2  1  85 24            sta     ZP_WINDOW_PTR_LO
+0011E4  1  A9 0F            lda     #>window_0
+0011E6  1  85 25            sta     ZP_WINDOW_PTR_HI
+0011E8  1  20 B7 0D         jsr     create_window
+0011EB  1  A9 E2            lda     #<text_array
+0011ED  1  85 46            sta     ZP_PARAM_STR_PTR_LO
+0011EF  1  A9 0E            lda     #>text_array
+0011F1  1  85 47            sta     ZP_PARAM_STR_PTR_HI
+0011F3  1  A9 A9            lda     #end_text_array-text_array
+0011F5  1  85 48            sta     ZP_PARAM_STR_SIZE
+0011F7  1  20 2E 0E         jsr     write_to_window
+0011FA  1               
+0011FA  1  A9 95            lda     #<window_1
+0011FC  1  85 24            sta     ZP_WINDOW_PTR_LO
+0011FE  1  A9 0F            lda     #>window_1
+001200  1  85 25            sta     ZP_WINDOW_PTR_HI
+001202  1  20 B7 0D         jsr     create_window
+001205  1  A9 E2            lda     #<text_array
+001207  1  85 46            sta     ZP_PARAM_STR_PTR_LO
+001209  1  A9 0E            lda     #>text_array
+00120B  1  85 47            sta     ZP_PARAM_STR_PTR_HI
+00120D  1  A9 A9            lda     #end_text_array-text_array
+00120F  1  85 48            sta     ZP_PARAM_STR_SIZE
+001211  1  20 2E 0E         jsr     write_to_window
+001214  1               
+001214  1  A9 9F            lda     #<window_2
+001216  1  85 24            sta     ZP_WINDOW_PTR_LO
+001218  1  A9 0F            lda     #>window_2
+00121A  1  85 25            sta     ZP_WINDOW_PTR_HI
+00121C  1  20 B7 0D         jsr     create_window
+00121F  1  A9 E2            lda     #<text_array
+001221  1  85 46            sta     ZP_PARAM_STR_PTR_LO
+001223  1  A9 0E            lda     #>text_array
+001225  1  85 47            sta     ZP_PARAM_STR_PTR_HI
+001227  1  A9 A9            lda     #end_text_array-text_array
+001229  1  85 48            sta     ZP_PARAM_STR_SIZE
+00122B  1  20 2E 0E         jsr     write_to_window
+00122E  1               
+00122E  1  A9 A9            lda     #<window_3
+001230  1  85 24            sta     ZP_WINDOW_PTR_LO
+001232  1  A9 0F            lda     #>window_3
+001234  1  85 25            sta     ZP_WINDOW_PTR_HI
+001236  1  20 B7 0D         jsr     create_window
+001239  1  A9 E2            lda     #<text_array
+00123B  1  85 46            sta     ZP_PARAM_STR_PTR_LO
+00123D  1  A9 0E            lda     #>text_array
+00123F  1  85 47            sta     ZP_PARAM_STR_PTR_HI
+001241  1  A9 A9            lda     #end_text_array-text_array
+001243  1  85 48            sta     ZP_PARAM_STR_SIZE
+001245  1  20 2E 0E         jsr     write_to_window
+001248  1               
+001248  1  A9 B3            lda     #<window_4
+00124A  1  85 24            sta     ZP_WINDOW_PTR_LO
+00124C  1  A9 0F            lda     #>window_4
+00124E  1  85 25            sta     ZP_WINDOW_PTR_HI
+001250  1  20 B7 0D         jsr     create_window
+001253  1  A9 E2            lda     #<text_array
+001255  1  85 46            sta     ZP_PARAM_STR_PTR_LO
+001257  1  A9 0E            lda     #>text_array
+001259  1  85 47            sta     ZP_PARAM_STR_PTR_HI
+00125B  1  A9 A9            lda     #end_text_array-text_array
+00125D  1  85 48            sta     ZP_PARAM_STR_SIZE
+00125F  1  20 2E 0E         jsr     write_to_window
+001262  1               
+001262  1  A9 BD            lda     #<window_5
+001264  1  85 24            sta     ZP_WINDOW_PTR_LO
+001266  1  A9 0F            lda     #>window_5
+001268  1  85 25            sta     ZP_WINDOW_PTR_HI
+00126A  1  20 B7 0D         jsr     create_window
+00126D  1  A9 E2            lda     #<text_array
+00126F  1  85 46            sta     ZP_PARAM_STR_PTR_LO
+001271  1  A9 0E            lda     #>text_array
+001273  1  85 47            sta     ZP_PARAM_STR_PTR_HI
+001275  1  A9 A9            lda     #end_text_array-text_array
+001277  1  85 48            sta     ZP_PARAM_STR_SIZE
+001279  1  20 2E 0E         jsr     write_to_window
+00127C  1               
+00127C  1  A9 C7            lda     #<window_b0
+00127E  1  85 24            sta     ZP_WINDOW_PTR_LO
+001280  1  A9 0F            lda     #>window_b0
+001282  1  85 25            sta     ZP_WINDOW_PTR_HI
+001284  1  20 B7 0D         jsr     create_window
+001287  1  A9 E2            lda     #<text_array
+001289  1  85 46            sta     ZP_PARAM_STR_PTR_LO
+00128B  1  A9 0E            lda     #>text_array
+00128D  1  85 47            sta     ZP_PARAM_STR_PTR_HI
+00128F  1  A9 A9            lda     #end_text_array-text_array
+001291  1  85 48            sta     ZP_PARAM_STR_SIZE
+001293  1  20 2E 0E         jsr     write_to_window
+001296  1               
+001296  1  A9 D1            lda     #<window_b1
+001298  1  85 24            sta     ZP_WINDOW_PTR_LO
+00129A  1  A9 0F            lda     #>window_b1
+00129C  1  85 25            sta     ZP_WINDOW_PTR_HI
+00129E  1  20 B7 0D         jsr     create_window
+0012A1  1  A9 E2            lda     #<text_array
+0012A3  1  85 46            sta     ZP_PARAM_STR_PTR_LO
+0012A5  1  A9 0E            lda     #>text_array
+0012A7  1  85 47            sta     ZP_PARAM_STR_PTR_HI
+0012A9  1  A9 A9            lda     #end_text_array-text_array
+0012AB  1  85 48            sta     ZP_PARAM_STR_SIZE
+0012AD  1  20 2E 0E         jsr     write_to_window
+0012B0  1               
+0012B0  1  A9 DB            lda     #<window_b2
+0012B2  1  85 24            sta     ZP_WINDOW_PTR_LO
+0012B4  1  A9 0F            lda     #>window_b2
+0012B6  1  85 25            sta     ZP_WINDOW_PTR_HI
+0012B8  1  20 B7 0D         jsr     create_window
+0012BB  1  A9 E2            lda     #<text_array
+0012BD  1  85 46            sta     ZP_PARAM_STR_PTR_LO
+0012BF  1  A9 0E            lda     #>text_array
+0012C1  1  85 47            sta     ZP_PARAM_STR_PTR_HI
+0012C3  1  A9 A9            lda     #end_text_array-text_array
+0012C5  1  85 48            sta     ZP_PARAM_STR_SIZE
+0012C7  1  20 2E 0E         jsr     write_to_window
+0012CA  1               
+0012CA  1  A9 E5            lda     #<window_b3
+0012CC  1  85 24            sta     ZP_WINDOW_PTR_LO
+0012CE  1  A9 0F            lda     #>window_b3
+0012D0  1  85 25            sta     ZP_WINDOW_PTR_HI
+0012D2  1  20 B7 0D         jsr     create_window
+0012D5  1  A9 E2            lda     #<text_array
+0012D7  1  85 46            sta     ZP_PARAM_STR_PTR_LO
+0012D9  1  A9 0E            lda     #>text_array
+0012DB  1  85 47            sta     ZP_PARAM_STR_PTR_HI
+0012DD  1  A9 A9            lda     #end_text_array-text_array
+0012DF  1  85 48            sta     ZP_PARAM_STR_SIZE
+0012E1  1  20 2E 0E         jsr     write_to_window
+0012E4  1               
+0012E4  1  A9 EF            lda     #<window_b4
+0012E6  1  85 24            sta     ZP_WINDOW_PTR_LO
+0012E8  1  A9 0F            lda     #>window_b4
+0012EA  1  85 25            sta     ZP_WINDOW_PTR_HI
+0012EC  1  20 B7 0D         jsr     create_window
+0012EF  1  A9 E2            lda     #<text_array
+0012F1  1  85 46            sta     ZP_PARAM_STR_PTR_LO
+0012F3  1  A9 0E            lda     #>text_array
+0012F5  1  85 47            sta     ZP_PARAM_STR_PTR_HI
+0012F7  1  A9 A9            lda     #end_text_array-text_array
+0012F9  1  85 48            sta     ZP_PARAM_STR_SIZE
+0012FB  1  20 2E 0E         jsr     write_to_window
+0012FE  1               
+0012FE  1  A9 F9            lda     #<window_b5
+001300  1  85 24            sta     ZP_WINDOW_PTR_LO
+001302  1  A9 0F            lda     #>window_b5
+001304  1  85 25            sta     ZP_WINDOW_PTR_HI
+001306  1  20 B7 0D         jsr     create_window
+001309  1  A9 E2            lda     #<text_array
+00130B  1  85 46            sta     ZP_PARAM_STR_PTR_LO
+00130D  1  A9 0E            lda     #>text_array
+00130F  1  85 47            sta     ZP_PARAM_STR_PTR_HI
+001311  1  A9 A9            lda     #end_text_array-text_array
+001313  1  85 48            sta     ZP_PARAM_STR_SIZE
+001315  1  20 2E 0E         jsr     write_to_window
+001318  1               
+001318  1  A9 03            lda     #<window_c0
+00131A  1  85 24            sta     ZP_WINDOW_PTR_LO
+00131C  1  A9 10            lda     #>window_c0
+00131E  1  85 25            sta     ZP_WINDOW_PTR_HI
+001320  1  20 B7 0D         jsr     create_window
+001323  1  A9 E2            lda     #<text_array
+001325  1  85 46            sta     ZP_PARAM_STR_PTR_LO
+001327  1  A9 0E            lda     #>text_array
+001329  1  85 47            sta     ZP_PARAM_STR_PTR_HI
+00132B  1  A9 A9            lda     #end_text_array-text_array
+00132D  1  85 48            sta     ZP_PARAM_STR_SIZE
+00132F  1  20 2E 0E         jsr     write_to_window
+001332  1               
+001332  1  A9 0D            lda     #<window_c1
+001334  1  85 24            sta     ZP_WINDOW_PTR_LO
+001336  1  A9 10            lda     #>window_c1
+001338  1  85 25            sta     ZP_WINDOW_PTR_HI
+00133A  1  20 B7 0D         jsr     create_window
+00133D  1  A9 E2            lda     #<text_array
+00133F  1  85 46            sta     ZP_PARAM_STR_PTR_LO
+001341  1  A9 0E            lda     #>text_array
+001343  1  85 47            sta     ZP_PARAM_STR_PTR_HI
+001345  1  A9 A9            lda     #end_text_array-text_array
+001347  1  85 48            sta     ZP_PARAM_STR_SIZE
+001349  1  20 2E 0E         jsr     write_to_window
+00134C  1               
+00134C  1  A9 17            lda     #<window_c2
+00134E  1  85 24            sta     ZP_WINDOW_PTR_LO
+001350  1  A9 10            lda     #>window_c2
+001352  1  85 25            sta     ZP_WINDOW_PTR_HI
+001354  1  20 B7 0D         jsr     create_window
+001357  1  A9 E2            lda     #<text_array
+001359  1  85 46            sta     ZP_PARAM_STR_PTR_LO
+00135B  1  A9 0E            lda     #>text_array
+00135D  1  85 47            sta     ZP_PARAM_STR_PTR_HI
+00135F  1  A9 A9            lda     #end_text_array-text_array
+001361  1  85 48            sta     ZP_PARAM_STR_SIZE
+001363  1  20 2E 0E         jsr     write_to_window
+001366  1               
+001366  1  A9 21            lda     #<window_c3
+001368  1  85 24            sta     ZP_WINDOW_PTR_LO
+00136A  1  A9 10            lda     #>window_c3
+00136C  1  85 25            sta     ZP_WINDOW_PTR_HI
+00136E  1  20 B7 0D         jsr     create_window
+001371  1  A9 E2            lda     #<text_array
+001373  1  85 46            sta     ZP_PARAM_STR_PTR_LO
+001375  1  A9 0E            lda     #>text_array
+001377  1  85 47            sta     ZP_PARAM_STR_PTR_HI
+001379  1  A9 A9            lda     #end_text_array-text_array
+00137B  1  85 48            sta     ZP_PARAM_STR_SIZE
+00137D  1  20 2E 0E         jsr     write_to_window
+001380  1               
+001380  1  A9 2B            lda     #<window_c4
+001382  1  85 24            sta     ZP_WINDOW_PTR_LO
+001384  1  A9 10            lda     #>window_c4
+001386  1  85 25            sta     ZP_WINDOW_PTR_HI
+001388  1  20 B7 0D         jsr     create_window
+00138B  1  A9 E2            lda     #<text_array
+00138D  1  85 46            sta     ZP_PARAM_STR_PTR_LO
+00138F  1  A9 0E            lda     #>text_array
+001391  1  85 47            sta     ZP_PARAM_STR_PTR_HI
+001393  1  A9 A9            lda     #end_text_array-text_array
+001395  1  85 48            sta     ZP_PARAM_STR_SIZE
+001397  1  20 2E 0E         jsr     write_to_window
+00139A  1               
+00139A  1  A9 35            lda     #<window_c5
+00139C  1  85 24            sta     ZP_WINDOW_PTR_LO
+00139E  1  A9 10            lda     #>window_c5
+0013A0  1  85 25            sta     ZP_WINDOW_PTR_HI
+0013A2  1  20 B7 0D         jsr     create_window
+0013A5  1  A9 E2            lda     #<text_array
+0013A7  1  85 46            sta     ZP_PARAM_STR_PTR_LO
+0013A9  1  A9 0E            lda     #>text_array
+0013AB  1  85 47            sta     ZP_PARAM_STR_PTR_HI
+0013AD  1  A9 A9            lda     #end_text_array-text_array
+0013AF  1  85 48            sta     ZP_PARAM_STR_SIZE
+0013B1  1  20 2E 0E         jsr     write_to_window
+0013B4  1               
+0013B4  1  A9 3F            lda     #<window_d0
+0013B6  1  85 24            sta     ZP_WINDOW_PTR_LO
+0013B8  1  A9 10            lda     #>window_d0
+0013BA  1  85 25            sta     ZP_WINDOW_PTR_HI
+0013BC  1  20 B7 0D         jsr     create_window
+0013BF  1  A9 E2            lda     #<text_array
+0013C1  1  85 46            sta     ZP_PARAM_STR_PTR_LO
+0013C3  1  A9 0E            lda     #>text_array
+0013C5  1  85 47            sta     ZP_PARAM_STR_PTR_HI
+0013C7  1  A9 A9            lda     #end_text_array-text_array
+0013C9  1  85 48            sta     ZP_PARAM_STR_SIZE
+0013CB  1  20 2E 0E         jsr     write_to_window
+0013CE  1               
+0013CE  1  A9 49            lda     #<window_d1
+0013D0  1  85 24            sta     ZP_WINDOW_PTR_LO
+0013D2  1  A9 10            lda     #>window_d1
+0013D4  1  85 25            sta     ZP_WINDOW_PTR_HI
+0013D6  1  20 B7 0D         jsr     create_window
+0013D9  1  A9 E2            lda     #<text_array
+0013DB  1  85 46            sta     ZP_PARAM_STR_PTR_LO
+0013DD  1  A9 0E            lda     #>text_array
+0013DF  1  85 47            sta     ZP_PARAM_STR_PTR_HI
+0013E1  1  A9 A9            lda     #end_text_array-text_array
+0013E3  1  85 48            sta     ZP_PARAM_STR_SIZE
+0013E5  1  20 2E 0E         jsr     write_to_window
+0013E8  1               
+0013E8  1  A9 53            lda     #<window_d2
+0013EA  1  85 24            sta     ZP_WINDOW_PTR_LO
+0013EC  1  A9 10            lda     #>window_d2
+0013EE  1  85 25            sta     ZP_WINDOW_PTR_HI
+0013F0  1  20 B7 0D         jsr     create_window
+0013F3  1  A9 E2            lda     #<text_array
+0013F5  1  85 46            sta     ZP_PARAM_STR_PTR_LO
+0013F7  1  A9 0E            lda     #>text_array
+0013F9  1  85 47            sta     ZP_PARAM_STR_PTR_HI
+0013FB  1  A9 A9            lda     #end_text_array-text_array
+0013FD  1  85 48            sta     ZP_PARAM_STR_SIZE
+0013FF  1  20 2E 0E         jsr     write_to_window
+001402  1               
+001402  1  A9 5D            lda     #<window_d3
+001404  1  85 24            sta     ZP_WINDOW_PTR_LO
+001406  1  A9 10            lda     #>window_d3
+001408  1  85 25            sta     ZP_WINDOW_PTR_HI
+00140A  1  20 B7 0D         jsr     create_window
+00140D  1  A9 E2            lda     #<text_array
+00140F  1  85 46            sta     ZP_PARAM_STR_PTR_LO
+001411  1  A9 0E            lda     #>text_array
+001413  1  85 47            sta     ZP_PARAM_STR_PTR_HI
+001415  1  A9 A9            lda     #end_text_array-text_array
+001417  1  85 48            sta     ZP_PARAM_STR_SIZE
+001419  1  20 2E 0E         jsr     write_to_window
+00141C  1               
+00141C  1  A9 67            lda     #<window_d4
+00141E  1  85 24            sta     ZP_WINDOW_PTR_LO
+001420  1  A9 10            lda     #>window_d4
+001422  1  85 25            sta     ZP_WINDOW_PTR_HI
+001424  1  20 B7 0D         jsr     create_window
+001427  1  A9 E2            lda     #<text_array
+001429  1  85 46            sta     ZP_PARAM_STR_PTR_LO
+00142B  1  A9 0E            lda     #>text_array
+00142D  1  85 47            sta     ZP_PARAM_STR_PTR_HI
+00142F  1  A9 A9            lda     #end_text_array-text_array
+001431  1  85 48            sta     ZP_PARAM_STR_SIZE
+001433  1  20 2E 0E         jsr     write_to_window
+001436  1               
+001436  1  A9 71            lda     #<window_d5
+001438  1  85 24            sta     ZP_WINDOW_PTR_LO
+00143A  1  A9 10            lda     #>window_d5
+00143C  1  85 25            sta     ZP_WINDOW_PTR_HI
+00143E  1  20 B7 0D         jsr     create_window
+001441  1  A9 E2            lda     #<text_array
+001443  1  85 46            sta     ZP_PARAM_STR_PTR_LO
+001445  1  A9 0E            lda     #>text_array
+001447  1  85 47            sta     ZP_PARAM_STR_PTR_HI
+001449  1  A9 A9            lda     #end_text_array-text_array
+00144B  1  85 48            sta     ZP_PARAM_STR_SIZE
+00144D  1  20 2E 0E         jsr     write_to_window
+001450  1               
+001450  1  A9 7B            lda     #<window_e
+001452  1  85 24            sta     ZP_WINDOW_PTR_LO
+001454  1  A9 10            lda     #>window_e
+001456  1  85 25            sta     ZP_WINDOW_PTR_HI
+001458  1  20 B7 0D         jsr     create_window
+00145B  1  A9 E2            lda     #<text_array
+00145D  1  85 46            sta     ZP_PARAM_STR_PTR_LO
+00145F  1  A9 0E            lda     #>text_array
+001461  1  85 47            sta     ZP_PARAM_STR_PTR_HI
+001463  1  A9 A9            lda     #end_text_array-text_array
+001465  1  85 48            sta     ZP_PARAM_STR_SIZE
+001467  1  20 2E 0E         jsr     write_to_window
+00146A  1               
+00146A  1               @main_loop:
+00146A  1  CB               wai
+00146B  1  80 FD            bra @main_loop  ; never return, just wait for reset
+00146D  1               
+00146D  1               init_global_video_regs:
+00146D  1                   ; set the various VERA registers needed
+00146D  1               
+00146D  1                   ; for DCSEL = 0
+00146D  1  9C 25 9F         stz     VERA_ctrl           ; no reset/DCSEL/ADDRSEL
+001470  1  A9 80            lda     #DISPLAY_SCALE
+001472  1  8D 2A 9F         sta     VERA_dc_hscale
+001475  1  8D 2B 9F         sta     VERA_dc_vscale
+001478  1  9C 2C 9F         stz     VERA_dc_border
+00147B  1               
+00147B  1                   ; for DCSEL = 1
+00147B  1  A9 02            lda     #DCSEL
+00147D  1  8D 25 9F         sta     VERA_ctrl
+001480  1  9C 29 9F         stz     VERA_dc_hstart
+001483  1  A9 A0            lda     #(640>>2)
+001485  1  8D 2A 9F         sta     VERA_dc_hstop
+001488  1  9C 2B 9F         stz     VERA_dc_vsstart
+00148B  1  A9 F0            lda     #(480>>1)
+00148D  1  8D 2C 9F         sta     VERA_dc_vstop
+001490  1  60               rts
+001490  1               
