@@ -5,6 +5,7 @@ some characters, especially block (drawing) characters, take up more of the cell
 <br>
 <br>
 <b>Features:</b>
+<br>
 * 106 text columns
 * 60 text rows
 * 96 ASCII characters, including blank and empty (transparent)
@@ -21,12 +22,14 @@ some characters, especially block (drawing) characters, take up more of the cell
 <br>
 <br>
 <b>Caviats:</b>
+<br>
 * does not support reverse scrolling or sideways scrolling (not impossible, just not coded)
 * does not support saving and restoring screen areas (e.g., for popup windows)
 * uses both VERA layers (L0 and L1), because characters are 6 pixels wide, and text tiles cannot be smaller than 8 pixels wide
 <br>
 <br>
 <b>Line Styles:</b>
+<br>
 * single-pixel vertical and single-pixel horizontal
 * single-pixel vertical and double-pixel horizontal
 * single-pixel vertical and triple-pixel horizontal
